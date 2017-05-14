@@ -50,3 +50,16 @@ octave-workspace
 
 # Simulink autosave extension
 .autosave
+
+##---------------------------------------------------
+## Project Specific
+## Don't store data yet, only code.
+##---------------------------------------------------
+*.dbf
+*.prj
+*.shp
+*.shx
+*.tif
+*.aux.xml
+*.nc
+*.txt
