@@ -1,5 +1,5 @@
-function [output_args] = prepareDEM(overview, extent, storpath, dimensions, deletefiles)
-%prepareDEM Downloads and converts DEM data
+function [output_args] = prepDEM(overview, extent, storpath, dimensions, deletefiles)
+%prepDEM Downloads and converts DEM data
 %   Inputs:
 %   1. A shapefile containing an overview of all AHN tiles (ahn_units.shp)
 %   2. A shapefile containing the extent of the research area, which will
