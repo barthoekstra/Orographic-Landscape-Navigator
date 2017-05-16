@@ -17,16 +17,15 @@ function [tracks] = prepBirdData(db_user, db_password, device_numbers, starttime
 %   satellites used, nr of acceleration measurements, z-axis acceleration
 %   variance and the project the tracker belongs to.
 %   
-    profile on;
 
     % Batching
     % Although not necessary, the code is written to allow for batching the
     % download. I have not checked to what extent I can push the limits of
-    % this code until I encounter memory issues, but the following variable
-    % can be changed to do so. More info on the url below:
+    % this code until I encounter memory issues, but the following
+    % variables can be changed to do so. More info on the url below:
     % https://nl.mathworks.com/help/database/ug/preference-settings-for-large-data-import.html
     batchsize = 100000; % change also in line below:
-    setdbprefs('FetchBatchSize', '100000'); % HAS to be written in quotes
+    setdbprefs('FetchBatchSize', '100000'); % HAS to be written in quotes for some reason
     setdbprefs('FetchInBatches', 'yes');
 
     % Turn values into sql-ready strings:
@@ -47,14 +46,14 @@ function [tracks] = prepBirdData(db_user, db_password, device_numbers, starttime
     % using a VPN!
     javaaddpath('drivers/postgresql-42.0.0.jre7.jar'); % required Driver
     conn = database('eecology', db_user, db_password, ...
-    'org.postgresql.Driver',  'jdbc:postgresql://db.e-ecology.sara.nl:5432/eecology?ssl=true&sslfactory=org.postgresql.ssl.NonValidatingFactory&');
+    'org.postgresql.Driver', 'jdbc:postgresql://db.e-ecology.sara.nl:5432/eecology?ssl=true&sslfactory=org.postgresql.ssl.NonValidatingFactory&');
     setdbprefs('DataReturnFormat', 'table');
 
     % Query
     % For a description of the table columns, see:
     % https://public.e-ecology.sara.nl/wiki/index.php/DB_Views_2015
     %
-    % Query adapted from LBBG_Texel2 code from Willem Bouten and adjusted to
+    % Query adapted from LBBG_Texel2 code by Willem Bouten and adjusted to
     % only select records within the study area and to include details on
     % the project.
     tracks = [];
@@ -97,6 +96,7 @@ function [tracks] = prepBirdData(db_user, db_password, device_numbers, starttime
         curs = exec(conn, sql);
 
         % Once for a small data sample
+        % @TODO: Make code below more elegant and efficient
         curs = fetch(curs, batchsize);
         tracks = vertcat(tracks, curs.Data);
         fprintf('First batch of: %d \n', device_numbers(i));
@@ -117,8 +117,6 @@ function [tracks] = prepBirdData(db_user, db_password, device_numbers, starttime
     
     % Close database connection
     close(conn);
-    
-    profile viewer;
     
 end
 
