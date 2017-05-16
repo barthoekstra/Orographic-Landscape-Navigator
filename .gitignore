@@ -63,3 +63,9 @@ octave-workspace
 *.aux.xml
 *.nc
 *.txt
+*.qpj
+*.mat
+
+OroLift
+ThesisGEarthTest
+LBBG_Texel2.m
