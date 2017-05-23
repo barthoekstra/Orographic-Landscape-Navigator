@@ -9,8 +9,8 @@ function [tracks] = prepBirdAccelerometerData(db_user, db_password, device_numbe
 %   6. A minimum number of observations per day the query will select
 %   7. Path to a shapefile delineating the research area bounds
 
-%   Example usage
-%   result = prepBirdData(db_user, db_password, [5390, 5419], '2016-08-01 00:00:00', '2016-08-03 00:00:00', 3600, 'data/ResearchAreaNH.shp')
+%   Example usage (takes approx. 49 min to run):
+%   tracks = prepBirdAccelerometerData2(username, password, devices, '2014-05-01 00:00:00', '2014-07-15 00:00:00', 3600, 'data/ResearchAreaNH.shp', 'data/unclassified');
 %
 %   This script queries the database for accelerometer data for the
 %   classifier. In order to make sure a sufficient density of data points
@@ -28,13 +28,9 @@ function [tracks] = prepBirdAccelerometerData(db_user, db_password, device_numbe
     % following variables can be changed to do so. More info on the url
     % below:
     % https://nl.mathworks.com/help/database/ug/preference-settings-for-large-data-import.html
-    batchsize = 100000; % change also in line below:
-    setdbprefs('FetchBatchSize', '100000'); % HAS to be written in quotes for some reason
+    batchsize = 25000; % change also in line below:
+    setdbprefs('FetchBatchSize', '25000'); % HAS to be written in quotes for some reason
     setdbprefs('FetchInBatches', 'yes');
-
-    % Turn values into sql-ready strings:
-    start = strcat('''', starttime, '''');
-    stop = strcat('''', stoptime, '''');
     
     % Determine query boundaries based on the research area shapefile
     shape = shapeinfo(shapefile);
@@ -50,103 +46,145 @@ function [tracks] = prepBirdAccelerometerData(db_user, db_password, device_numbe
     % using a VPN!
     javaaddpath('drivers/postgresql-42.0.0.jre7.jar'); % required Driver
     conn = database('eecology', db_user, db_password, ...
-    'org.postgresql.Driver', 'jdbc:postgresql://db.e-ecology.sara.nl:5432/eecology?ssl=true&sslfactory=org.postgresql.ssl.NonValidatingFactory&');
+        'org.postgresql.Driver', 'jdbc:postgresql://db.e-ecology.sara.nl:5432/eecology?ssl=true&sslfactory=org.postgresql.ssl.NonValidatingFactory&');
     setdbprefs('DataReturnFormat', 'table');
-
-    % Query
-    % For a description of the table columns, see:
-    % https://public.e-ecology.sara.nl/wiki/index.php/DB_Views_2015 and
-    % http://nlesc.github.io/eEcology-Classification/#Classification
-    tracks = [];
-    data   = [];
     
-    for i = 1:numel(device_numbers)
-        sql = strcat('WITH high_res_days AS (', ...
-                        ' SELECT s.device_info_serial, s.date_time, ', ...
-                            ' s.longitude, s.latitude, s.altitude, ', ...
-                            ' s.speed_2d, ', ...
-                            ' COUNT(*) OVER (PARTITION BY DATE(s.date_time)) AS n_obs_day ', ...
-                        ' FROM gps.ee_tracking_speed_limited s', ...
-                        ' WHERE ( s.date_time >= ', start,  ')', ...
-                            ' AND ( s.date_time <= ', stop,    ')' , ...
-                            ' AND ( s.device_info_serial = ', num2str(device_numbers(i)), ')', ...
-                            ' AND ( s.longitude >= ', num2str(boundingbox(1,1)), ')', ...
-                            ' AND ( s.longitude <= ', num2str(boundingbox(2,1)), ')', ...
-                            ' AND ( s.latitude >= ', num2str(boundingbox(1,2)), ')', ...
-                            ' AND ( s.latitude <= ', num2str(boundingbox(2,2)), ')', ...
-                            ' AND s.userflag = 0', ...
-                    ' )', ...
+    % Storpath needs to exist to store the files
+    if exist(storpath, 'dir') ~= 7
+        mkdir(storpath);
+    end
+
+    % Generate neatly chuncked dates
+    dates = generateDateStrings(starttime, stoptime);
+    
+    for i = 1:numel(device_numbers) % Iterate through the devices
+        for j = 1:numel(dates)-1    % Iterate through date steps
+            
+            fprintf('Checking tracker %d for data on daterange %s till %s \n', device_numbers(i), dates(j), dates(j+1))
+            % Turn datevalues into sql-ready strings:
+            start = strcat('''', dates(j), '''');
+            stop = strcat('''', dates(j+1), '''');
+            
+            sql = strcat('WITH high_res_days AS (', ...
                     ' SELECT s.device_info_serial, s.date_time, ', ...
-                        ' date_part(''year''::text, t.date_time) AS year, ', ...
-                        ' date_part(''month''::text, t.date_time) AS month, ', ...
-                        ' date_part(''day''::text, t.date_time) AS day, ', ...
-                        ' date_part(''hour''::text, t.date_time) AS hour, ', ...
-                        ' date_part(''minute''::text, t.date_time) AS minute, ', ...
-                        ' date_part(''second''::text, t.date_time) AS second, ', ...
-                        ' s.speed_2d AS speed, ', ...
                         ' s.longitude, s.latitude, s.altitude, ', ...
-                        ' t.speed as tspeed, ', ...
-                        ' a.index, (a.x_acceleration-d.x_o)/d.x_s AS x_cal, ', ...
-                        ' (a.y_acceleration-d.y_o)/d.y_s AS y_cal, ', ...
-                        ' (a.z_acceleration-d.z_o)/d.z_s AS z_cal ', ...
-                    ' FROM high_res_days s' , ...
-                    ' LEFT JOIN gps.ee_acceleration_limited a' , ...
-                        ' ON (s.device_info_serial = a.device_info_serial AND s.date_time = a.date_time)' , ...
-                    ' LEFT JOIN gps.ee_tracker_limited d ', ...
-                        ' ON s.device_info_serial = d.device_info_serial ', ...
-                    ' LEFT JOIN gps.get_uvagps_track_speed (',num2str(device_numbers(i)), ',' ,start, ',' ,stop, ' ) t ',...
-                        ' ON s.device_info_serial = t.device_info_serial and s.date_time = t.date_time ',...
-                    ' WHERE ( s.n_obs_day >=  ', num2str(minobs),')', ...
-                    ' ORDER BY s.date_time, a.index' );
+                        ' s.speed_2d, ', ...
+                        ' COUNT(*) OVER (PARTITION BY DATE(s.date_time)) AS n_obs_day ', ...
+                    ' FROM gps.ee_tracking_speed_limited s', ...
+                    ' WHERE ( s.date_time >= ', start,  ')', ...
+                        ' AND ( s.date_time <= ', stop,    ')' , ...
+                        ' AND ( s.device_info_serial = ', num2str(device_numbers(i)), ')', ...
+                        ' AND ( s.longitude >= ', num2str(boundingbox(1,1)), ')', ...
+                        ' AND ( s.longitude <= ', num2str(boundingbox(2,1)), ')', ...
+                        ' AND ( s.latitude >= ', num2str(boundingbox(1,2)), ')', ...
+                        ' AND ( s.latitude <= ', num2str(boundingbox(2,2)), ')', ...
+                        ' AND s.userflag = 0', ...
+                ' )', ...
+                ' SELECT s.device_info_serial, s.date_time, ', ...
+                    ' date_part(''year''::text, t.date_time) AS year, ', ...
+                    ' date_part(''month''::text, t.date_time) AS month, ', ...
+                    ' date_part(''day''::text, t.date_time) AS day, ', ...
+                    ' date_part(''hour''::text, t.date_time) AS hour, ', ...
+                    ' date_part(''minute''::text, t.date_time) AS minute, ', ...
+                    ' date_part(''second''::text, t.date_time) AS second, ', ...
+                    ' s.speed_2d AS speed, ', ...
+                    ' s.longitude, s.latitude, s.altitude, ', ...
+                    ' t.speed as tspeed, ', ...
+                    ' a.index, (a.x_acceleration-d.x_o)/d.x_s AS x_cal, ', ...
+                    ' (a.y_acceleration-d.y_o)/d.y_s AS y_cal, ', ...
+                    ' (a.z_acceleration-d.z_o)/d.z_s AS z_cal ', ...
+                ' FROM high_res_days s' , ...
+                ' LEFT JOIN gps.ee_acceleration_limited a' , ...
+                    ' ON (s.device_info_serial = a.device_info_serial AND s.date_time = a.date_time)' , ...
+                ' LEFT JOIN gps.ee_tracker_limited d ', ...
+                    ' ON s.device_info_serial = d.device_info_serial ', ...
+                ' LEFT JOIN gps.get_uvagps_track_speed (',num2str(device_numbers(i)), ',' ,start, ',' ,stop, ' ) t ',...
+                    ' ON s.device_info_serial = t.device_info_serial and s.date_time = t.date_time ',...
+                ' WHERE ( s.n_obs_day >=  ', num2str(minobs),')', ...
+                ' ORDER BY s.date_time, a.index' );
+        
+            % For some odd reason the query only works if converted to char
+            sql = char(sql);
 
-        % For some odd reason the query only works if converted to char
-        sql = char(sql);
-
-        % Execute query and fetch results
-        curs = exec(conn, sql);
-        disp(curs.Message)
-
-        % Once for a small data sample
-        % @TODO: Make code below more elegant and efficient
-        curs = fetch(curs, batchsize);
-        data = vertcat(data, curs.Data);
-        fprintf('First batch of tracker: %d \n', device_numbers(i));
-        disp(curs.Message)
-
-        % Now batch the rest
-        while ~strcmp(curs.Data, 'No Data')
+            % Execute query and fetch results
+            curs = exec(conn, sql);
+            disp(curs.Message);
             curs = fetch(curs, batchsize);
-            if ~strcmp(curs.Data, 'No Data')
-                data = vertcat(data, curs.Data);
-                fprintf('Another batch of: %d records\n', batchsize);
-            else
-                fprintf('Finished downloading data of tracker: %d \n', device_numbers(i));
+            disp(curs.Message);
+            
+            k = 1;
+            while ~strcmp(curs.Data, 'No Data')
+                % Storpath needs to exist to store the files
+                if exist([storpath,'/', num2str(device_numbers(i))], 'dir') ~= 7
+                    mkdir([storpath,'/', num2str(device_numbers(i))]);
+                end
+                
+                data = table2struct(curs.Data, 'ToScalar', true);
+                
+                % Convert date format for filename:
+                % e.g. 2016-08-01 06:00:00 to 20160801
+                thisday = dates(j);
+                thisday = replace(thisday, '-', ''); % remove dashes
+                datechar = char(thisday);
+                datechar = datechar(1:8);
+                
+                % Store file
+                filename = sprintf('%s/%d/%dd%sb%d', storpath, device_numbers(i), device_numbers(i), datechar, k);
+                save(filename, 'data');
+                
+                % Show progress in console
+                fprintf('Batch %d of tracker %d on date %s till %s stored \n', k, device_numbers(i), dates(j), dates(j+1));
+                
+                % Stored, so data can be emptied
+                data = [];
+                
+                % And fetch a new batch of records
+                curs = fetch(curs, batchsize);
+                
+                k = k + 1;
             end
+            
+            k = 1;
         end
-        disp(curs.Message);
-        
-        % Append to tracks and convert data to struct for the classifier
-        tracks = vertcat(tracks, data);
-        data = table2struct(data, 'ToScalar', true);
-        
-        % And store it in a .mat file for the classifier
-        if exist(storpath, 'dir') ~= 7
-            mkdir(storpath);
-        end
-        
-        strbegin = char(data.date_time(1));
-        strend   = char(data.date_time(end));
-        filename = sprintf('%s/class%d-%still%sminobs%dunannotated.mat', ...
-            storpath, device_numbers(i), strbegin(1:10), strend(1:10), minobs);
-        save(filename, 'data');
-        
-        % File saved, now empty data for a next loop iteration
-        data = [];
     end
     
-    % Close database connection
+    % All queries done, so we can close the db connection
     close(conn);
     
+    % Returns 1 if succesful
+    tracks = 1;
+    
     profile viewer;
+end
+
+function [datestrings] = generateDateStrings(starttime, endtime, format)
+%generateDateStrings Generates date strings for querying data by day
+%   Input:
+%   1. A starttime in a certain format
+%   2. An endtime in a certain format
+%   3. The format of starttime, endtime and the query output. If no format
+%      is given, the following is used: 'yyyy-mm-dd HH:MM:SS'
+%
+%   Output:
+%   A list of strings iterating throughout the entire datetime range in
+%   neat blocks, as follows:
+%   2016-08-01 06:00:00
+%   2016-08-02 00:00:00
+%   2016-08-03 00:00:00
+%   2016-08-03 12:00:00
+
+    if nargin < 3
+        format = 'yyyy-mm-dd HH:MM:SS';
+    end
+
+    startday = datenum(starttime, format);
+    startday = floor(startday + 1);
+    endday   = datenum(endtime, format);
+    endday   = floor(endday);
+
+    datenums = startday:1:endday;
+    datestrings = datestr(datenums, format);
+
+    datestrings = string([starttime; datestrings; endtime]);
 end
 
