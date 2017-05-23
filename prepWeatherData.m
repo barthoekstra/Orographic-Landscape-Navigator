@@ -105,8 +105,8 @@ function [data, stations] = prepWeatherData(storpath, extent, datestart, dateend
 
     % Prepare other POST request components
     vars = 'WIND';                  % Variables of interest (see docs)
-    datestartstr = [datestart, '01'];   % Start date with hour
-    dateendstr   = [dateend, '24'];     % End date with hour
+    datestartstr = [num2str(datestart), '01'];   % Start date with hour
+    dateendstr   = [num2str(dateend), '24'];     % End date with hour
 
     % POST request example:
     % stns=235:280:260&vars=VICL:PRCP&start=2014050101&end=2014071524
