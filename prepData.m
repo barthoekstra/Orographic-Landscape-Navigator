@@ -25,7 +25,7 @@ datetimeformat = 'yyyy-mm-dd HH:MM:SS';
 % @NOTE: In further calculations, effects have to be corrected for the
 % number of observations in a day (!)
 hg_min_obs = 2880; % 'once every 30 seconds' (not really)
-lbbg_min_obs = 0; % Usage of 180 results in data for 606, 754, 805, 806 and 871
+lbbg_min_obs = 0; % Use of 180 as minimum results in data for 606, 754, 805, 806 and 871
 
 %% Fetch Accelerometer data
 highres_hg_devices = prepBirdAccelerometerData(db_user, db_pass, ...
@@ -40,6 +40,7 @@ save('proj_settings.mat', 'db_pass', 'db_user', 'devices', ...
      'enddatetime', 'hg_min_obs', 'highres_hg_devices', ...
      'highres_lbbg_devices', 'lbbg_min_obs', 'startdatetime', ...
      'trackers_hg', 'trackers_lbbg');
+ 
 %% Fetch normal tracking data
 %  Now that we now which birds have datapoints with a sufficient resolution
 %  (excluding lbbg) and data within the given timeframe, we can download
@@ -58,6 +59,8 @@ startdate = str2double(datestr(startdatenum, conversionformat));
 enddate   = str2double(datestr(enddatenum, conversionformat));
 
 [wind, stations] = prepWeatherData('data/weather/', 'data/ResearchAreaNH.shp', startdate, enddate);
+wind = table(wind(:,1), wind(:,2), wind(:,3), wind(:,4), wind(:,5), wind(:,6), wind(:,7), ...
+             'VariableNames', {'stationID', 'date', 'hour', 'wdir', 'wspeed_hr', 'wspeed_10min', 'wspeed_peak'});
 save('proj_wind.mat', 'wind', 'stations');
 
 %% Load DEM info from files
@@ -65,5 +68,7 @@ save('proj_wind.mat', 'wind', 'stations');
 %  DEM files again. Code is properly documented in the prepDEM file, but
 %  gdal and ogr2ogr commands may have to be called from Python, for which a
 %  script is still to be written
+%  @NOTE: Rewrite gdal and ogr2ogr scripts to a Python version not
+%  dependent on dependencies provided by MATLAB.
 deminfo = loadDEMinfo('data/dem/', '.wgs84.tif', -1e10);
 save('proj_deminfo.mat', 'deminfo');
