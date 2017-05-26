@@ -1,4 +1,4 @@
-function [tracks] = prepBirdAccelerometerData(db_user, db_password, device_numbers, starttime, stoptime, minobs, shapefile, storpath)
+function [used_devices] = prepBirdAccelerometerData(db_user, db_password, device_numbers, starttime, stoptime, minobs, shapefile, storpath)
 %prepBirdAccelerometerData Queries accelerometer data
 %   Inputs:
 %   1. Database username
@@ -56,6 +56,9 @@ function [tracks] = prepBirdAccelerometerData(db_user, db_password, device_numbe
 
     % Generate neatly chuncked dates
     dates = generateDateStrings(starttime, stoptime);
+    
+    % For later use we store the vector of used devices
+    devices = [];
     
     for i = 1:numel(device_numbers) % Iterate through the devices
         for j = 1:numel(dates)-1    % Iterate through date steps
@@ -138,6 +141,9 @@ function [tracks] = prepBirdAccelerometerData(db_user, db_password, device_numbe
                 % Stored, so data can be emptied
                 data = [];
                 
+                % Store fetched device
+                devices = [devices device_numbers(i)];
+                
                 % And fetch a new batch of records
                 curs = fetch(curs, batchsize);
                 
@@ -151,8 +157,8 @@ function [tracks] = prepBirdAccelerometerData(db_user, db_password, device_numbe
     % All queries done, so we can close the db connection
     close(conn);
     
-    % Returns 1 if succesful
-    tracks = 1;
+    % Returns selected devices if successful
+    used_devices = unique(devices);
     
     profile viewer;
 end
