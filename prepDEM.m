@@ -28,7 +28,7 @@ function [output_args] = prepDEM(overview, extent, storpath, dimensions, deletef
 %   of code and unncomment it. Unfortunately MATLAB does not use your
 %   system's default PATH.
 %   
-%   setenv('PATH', 'YOUR_PATH_HERE');
+%   setenv('PATH', ['YOUR_PATH_HERE:', getenv('PATH')])
     
     profile on
     
