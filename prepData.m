@@ -41,6 +41,29 @@ save('proj_settings.mat', 'db_pass', 'db_user', 'devices', ...
      'highres_lbbg_devices', 'lbbg_min_obs', 'startdatetime', ...
      'trackers_hg', 'trackers_lbbg');
  
+%% Prepare accelerometer data files for classification
+%  In order to classify based on the accelerometer, do the following:
+%  1. Copy the path from paths.txt (see below) over to the right line in the
+%     settings.properties file, behind the line that starts with
+%     'unannotated_measurement_source_paths'. Make sure there are no (real)
+%     linebreaks!
+%  2. Copy the folder structure over to the data/ folder of the
+%     classification, so the folder should contain a list of
+%     numbered-folders (corresponding with device IDs with a bunch of .mat
+%     files in them.
+matfiles = dir(fullfile('data/unclassified/', '*/*.mat'))
+
+filenames = {matfiles(:).name}';
+folders   = {matfiles(:).folder}';
+
+paths = strcat(folders, '/', filenames);
+paths = replace(paths, [pwd, '/data/unclassified/'],'');
+
+pathsstring = join(paths, ',')
+fileID = fopen('data/unclassified/paths.txt', 'w');
+fprintf(fileID, '%s', pathsstring);
+fclose(fileID);
+ 
 %% Fetch normal tracking data
 %  Now that we now which birds have datapoints with a sufficient resolution
 %  (excluding lbbg) and data within the given timeframe, we can download
