@@ -51,18 +51,24 @@ save('proj_settings.mat', 'db_pass', 'db_user', 'devices', ...
 %     classification, so the folder should contain a list of
 %     numbered-folders (corresponding with device IDs with a bunch of .mat
 %     files in them.
+%
+% @NOTE: The following requires some cleanup. Make sure the directory
+% structure introduced in prepBirdAccelerometerData is changed
+% correspondingly. Unfortunately the classifier cannot handle files
+% organized in folders.
 matfiles = dir(fullfile('data/unclassified/', '*/*.mat'))
 
 filenames = {matfiles(:).name}';
-folders   = {matfiles(:).folder}';
+%folders   = {matfiles(:).folder}';
 
-paths = strcat(folders, '/', filenames);
-paths = replace(paths, [pwd, '/data/unclassified/'],'');
+%paths = strcat(folders, '/', filenames);
+%paths = replace(paths, [pwd, '/data/unclassified/'],'');
 
-pathsstring = join(paths, ',')
+pathsstring = join(filenames, ',')
 fileID = fopen('data/unclassified/paths.txt', 'w');
 fprintf(fileID, '%s', pathsstring);
 fclose(fileID);
+
  
 %% Fetch normal tracking data
 %  Now that we now which birds have datapoints with a sufficient resolution
