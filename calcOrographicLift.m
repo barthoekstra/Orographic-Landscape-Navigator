@@ -119,14 +119,15 @@ aspect = aspect + (aspect < 0) * 360; % transform to [0 360]
 % Cleanup
 slope(isnan(slope)) = 0;
 
+% @NOTE: Remove the commented out section below later if not used
 % Calculate Ca (Updraft coefficient) for every 10 degrees change of wind
 % direction. We don't need to calculate Ca in finer steps, because KNMI
 % only reports the values in steps of 10 degrees.
-Ca = zeros(size(dem, 1), size(dem, 2), 36);
-for i = 10:10:360
-    k = i / 10;
-    Ca(:,:,k) = sind(slope) .* cosd(i - aspect);
-end
+% Ca = zeros(size(dem, 1), size(dem, 2), 36);
+% for i = 10:10:360
+%     k = i / 10;
+%     Ca(:,:,k) = sind(slope) .* cosd(i - aspect);
+% end
 
 %%
 % Now it is - finally - time to calculate the orographic lift
@@ -140,7 +141,7 @@ wdir_col     = wspeed_col;
 oroglift_col = wspeed_col;
 wstation_col = wspeed_col;
 
-for i = 1:n
+parfor i = 1:n
     % Change date formatting to get wind data
     datetime = datenum(trackselection(i,:).date_time, 'yyyy-mm-dd HH:MM:SS');
     date = str2num(datestr(datetime, 'yyyymmdd'));
@@ -164,7 +165,7 @@ for i = 1:n
     cols(cols <= 0 | cols > size(dem, 2)) = []; % Cannot select out of range of DEM, so remove those cols
     
     if wdir ~= 990 && wdir ~= 0 % wdir of 990 means wdir is variable, 0 means no wind
-        orogliftarea = wspeed .* Ca(rows, cols, wdir / 10);
+        orogliftarea = wspeed .* sind(slope(rows, cols)) .* cosd((wdir / 10) - aspect(rows, cols));
         oroglift = nanmax(orogliftarea(:));
     else
         oroglift = NaN;
