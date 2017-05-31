@@ -25,7 +25,7 @@ datetimeformat = 'yyyy-mm-dd HH:MM:SS';
 % @NOTE: In further calculations, effects have to be corrected for the
 % number of observations in a day (!)
 hg_min_obs = 2880; % 'once every 30 seconds' (not really)
-lbbg_min_obs = 0; % Use of 180 as minimum results in data for 606, 754, 805, 806 and 871
+lbbg_min_obs = 0; % Too low data resolution, so we accept everything
 
 %% Fetch Accelerometer data
 highres_hg_devices = prepBirdAccelerometerData(db_user, db_pass, ...
