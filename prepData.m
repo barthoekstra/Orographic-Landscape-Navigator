@@ -99,5 +99,5 @@ save('proj_wind.mat', 'wind', 'stations');
 %  script is still to be written
 %  @NOTE: Rewrite gdal and ogr2ogr scripts to a Python version not
 %  dependent on dependencies provided by MATLAB.
-deminfo = loadDEMinfo('data/dem/', '.wgs84.tif', -1e10);
-save('proj_deminfo.mat', 'deminfo');
+dems = loadDEMinfo('data/dem/', '.wgs84.tif', -1e10);
+save('proj_dems.mat', 'dems');
