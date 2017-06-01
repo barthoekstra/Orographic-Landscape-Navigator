@@ -1,12 +1,4 @@
 function [tracksOroLift] = calcOrographicLift(storpath, filename, trackselection, stations, wind, cellsize, radius, nanthreshold)
-% storpath = 'data/dem/'; 
-% filename = 'r09az2.wgs84.tif';
-% deminfo = dems(3,:);
-% trackselection = tracks(tracks.longitude >= deminfo.XMin & tracks.longitude <= deminfo.XMax ...
-%                             & tracks.latitude >= deminfo.YMin & tracks.latitude <= deminfo.YMax, :);
-% cellsize = 2.5;
-% radius = 4; 
-% nanthreshold = -1e10;
 %calcOrographicLift Calculates orographic lift on provided locations
 %   Inputs:
 %   1. Path where DEM tiles are stored (e.g. 'data/dem/')
@@ -19,11 +11,6 @@ function [tracksOroLift] = calcOrographicLift(storpath, filename, trackselection
 %
 %   setenv('PATH', ['/usr/local/bin:/Users/barthoekstra/anaconda/bin:/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/bin:/opt/X11/bin:/Library/TeX/texbin:', getenv('PATH')])
 
-% Some global variables
-%nanthreshold = -1e10;
-%cellsize = 2.5; % m (meter)
-%radius = 4; % 10m (meter)
-%storpath = 'data/dem/';
 filesuffix = '.wgs84.tif';
 filename = char(filename);
 
@@ -52,7 +39,7 @@ for i = 1:size(tiles,1)
    [xi, yi] = polyxpoly(cell2mat(ref_tile.X), cell2mat(ref_tile.Y), ...
                         cell2mat(comp_tile.X), cell2mat(comp_tile.Y));
    
-   if ~isempty(xi) & ~isempty(yi)
+   if ~isempty(xi) && ~isempty(yi)
        % Apparently there is some intersection. Store the name of this
        % unit, so we know what to merge later on
        merge_units = [merge_units, comp_tile.UNIT];
@@ -77,16 +64,6 @@ end
 
 original_dem = [storpath, filename];
 merged_dem = output;
-
-%%
-% ---------------------------------------------------------------------
-% Select all datapoints within boundary of the original (non-merged) 
-% DEM
-% ---------------------------------------------------------------------
-% info = deminfo(strcmp(deminfo.filenames, filename),:);
-% 
-% trackselection = tracks(tracks.longitude >= info.XMin & tracks.longitude <= info.XMax ...
-%                         & tracks.latitude >= info.YMin & tracks.latitude <= info.YMax, :);
 
 %%
 % ---------------------------------------------------------------------
@@ -119,16 +96,6 @@ aspect = aspect + (aspect < 0) * 360; % transform to [0 360]
 % Cleanup
 slope(isnan(slope)) = 0;
 
-% @NOTE: Remove the commented out section below later if not used
-% Calculate Ca (Updraft coefficient) for every 10 degrees change of wind
-% direction. We don't need to calculate Ca in finer steps, because KNMI
-% only reports the values in steps of 10 degrees.
-% Ca = zeros(size(dem, 1), size(dem, 2), 36);
-% for i = 10:10:360
-%     k = i / 10;
-%     Ca(:,:,k) = sind(slope) .* cosd(i - aspect);
-% end
-
 %%
 % Now it is - finally - time to calculate the orographic lift
 spatialinfo = geotiffinfo(merged_dem);
@@ -138,8 +105,11 @@ n = size(trackselection, 1);
 % the table later on
 wspeed_col   = zeros(n,1);
 wdir_col     = wspeed_col;
-oroglift_col = wspeed_col;
+oroglift_max_col = wspeed_col;
+oroglift_min_col = wspeed_col;
+oroglift_mean_col = wspeed_col;
 wstation_col = wspeed_col;
+dem_alt_col = wspeed_col;
 
 parfor i = 1:n
     % Change date formatting to get wind data
@@ -166,18 +136,31 @@ parfor i = 1:n
     
     if wdir ~= 990 && wdir ~= 0 % wdir of 990 means wdir is variable, 0 means no wind
         orogliftarea = wspeed .* sind(slope(rows, cols)) .* cosd((wdir / 10) - aspect(rows, cols));
-        oroglift = nanmax(orogliftarea(:));
+        oroglift_max = nanmax(orogliftarea(:));
+        oroglift_min = nanmin(orogliftarea(:));
+        oroglift_mean = nanmean(orogliftarea(:));
     else
-        oroglift = NaN;
+        oroglift_max = NaN;
+        oroglift_min = NaN;
+        oroglift_mean = NaN;
     end
+    
+    dem_alt = nanmean(nanmean(dem(rows, cols)));
     
     wspeed_col(i) = wspeed;
     wdir_col(i) = wdir;
-    oroglift_col(i) = oroglift;
+    oroglift_max_col(i) = oroglift_max;
+    oroglift_min_col(i) = oroglift_min;
+    oroglift_mean_col(i) = oroglift_mean;
     wstation_col(i) = cWS;
+    dem_alt_col(i) = dem_alt;
+    
 end
 
-trackselection.oroglift = oroglift_col;
+trackselection.oroglift_max = oroglift_max_col;
+trackselection.oroglift_mean = oroglift_mean_col;
+trackselection.oroglift_min = oroglift_min_col;
+trackselection.dem_altitude = dem_alt_col;
 trackselection.wspeed = wspeed_col;
 trackselection.wdir = wdir_col;
 trackselection.wstation = wstation_col;
@@ -187,12 +170,5 @@ tracksOroLift = trackselection;
 
 % Delete merged file
 delete(merged_dem);
-
-% % Now remove the initial tracks from the table
-% tracks(tracks.longitude >= info.XMin & tracks.longitude <= info.XMax ...
-%        & tracks.latitude >= info.YMin & tracks.latitude <= info.YMax, :) = [];
-%    
-% % And replace with the new ones containing data on orographic lift
-% tracks = vertcat(tracks, trackselection);
 
 end
