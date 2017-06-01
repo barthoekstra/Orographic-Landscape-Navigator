@@ -66,6 +66,16 @@ save(['proj_settings_', daterange, '.mat'], 'db_pass', 'db_user', 'devices', ...
 %     lines. Every time a classifications.csv file is created, you can
 %     rename these to the respective device ID. So after classification,
 %     you end up with files such as 317.csv, 6202.csv, etc.
+%
+%  @Note: Sometimes (very rarely) accelerometer data contains NaNs in the
+%  tspeed columns (and possibly other columns as well), these cannot be
+%  classified by the classifier and will throw an error. Possibly this can
+%  be fixed, but for now you will have to identify this file manually and
+%  change things manually. This is a bit burdensome, but can be done by
+%  feeding successively halves of the dataset to the classifier and
+%  checking when it throws an error. If it does, feed half of that data
+%  again until you find the culprit, etc. In this file all you need to do
+%  is remove the NaN records.
 
 matfiles = dir(fullfile(['data/unclassified/', daterange, '/'], '*.mat'));
 
