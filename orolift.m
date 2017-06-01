@@ -1,3 +1,8 @@
+% This script ties all the data processing together. Now that all data has
+% been acquired, orographic lift can be calculated. The resulting dataset
+% can be combined with the classified dataset, and a selection containing
+% only data on flight behaviour is the final result.
+
 clear;
 close all;
 clc;
@@ -5,13 +10,12 @@ clc;
 setenv('PATH', ['/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin', getenv('PATH')])
 setenv('DYLD_LIBRARY_PATH',['/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin' getenv('DYLD_LIBRARY_PATH')])
 
-
 profile on;
 
-load('proj_settings_2015.mat');
-load('proj_tracks_2015.mat');
-load('proj_dems_2015.mat');
-load('proj_wind_2015.mat');
+load('proj_settings_2016.mat');
+load('proj_tracks_2016.mat');
+load('proj_dems_2016.mat');
+load('proj_wind_2016.mat');
 
 % Prepare tracks to store orographic lift data
 i = size(tracks, 1);
@@ -55,7 +59,7 @@ save(['proj_tracks_oroglift_', daterange, '.mat'], 'tracks');
 profile viewer;
 
 %% Merge orographic lift data with classifications
-csvfiles = dir(fullfile('data/classified/', '*.csv'));
+csvfiles = dir(fullfile(['data/classified/', daterange, '/*.csv']));
 
 classifications = [];
 for i = 1:size(csvfiles,1)
@@ -101,3 +105,15 @@ flight_tracks = classified_tracks(classified_tracks.class_id == 1 | ...
 % Save the final results in MATLAB and CSV file
 save(['proj_flight_tracks_', daterange, '.mat'], 'flight_tracks');
 writetable(flight_tracks, ['flight_tracks_', daterange, '.csv']);
+
+%% Optional: Combine datasets from multiple periods
+%  If necessary, this can be done as in the following example, uncomment
+%  when in use:
+
+flight_2015 = load('proj_flight_tracks_2015');
+flight_2016 = load('proj_flight_tracks_2016');
+
+flight_tracks = vertcat(flight_2015.flight_tracks, flight_2016.flight_tracks);
+
+save('flight_tracks_2015_2016.mat', 'flight_tracks');
+writetable(flight_tracks, 'flight_tracks_2015_2016.csv');
