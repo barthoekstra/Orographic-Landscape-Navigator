@@ -45,7 +45,7 @@ for i = 1:n
     toc
 end
 
-save('proj_tracks_oroglift.mat', 'tracks');
+save(['proj_tracks_oroglift_', daterange, '.mat'], 'tracks');
 
 profile viewer;
 
@@ -66,7 +66,7 @@ classifications.date_time = replace(classifications.date_time, '00Z', '');
 % and behaviour classifications
 classified_tracks = innerjoin(tracks, classifications);
 
-save('proj_tracks_classified.mat', 'classified_tracks');
+save(['proj_tracks_classified_', daterange, '.mat'], 'classified_tracks');
 
 %% Prepare data for data analysis
 %  In our data analysis, we are only focussed on the flight strategies of
@@ -94,5 +94,5 @@ flight_tracks = classified_tracks(classified_tracks.class_id == 1 | ...
                                   classified_tracks.class_id == 9, :);
 
 % Save the final results in MATLAB and CSV file
-save('proj_flight_tracks.mat', 'flight_tracks');
-writetable(flight_tracks, 'flight_tracks.csv');
+save(['proj_flight_tracks_', daterange, '.mat'], 'flight_tracks');
+writetable(flight_tracks, ['flight_tracks_', daterange, '.csv']);
