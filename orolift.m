@@ -2,18 +2,23 @@ clear;
 close all;
 clc;
 
-setenv('PATH', ['/usr/local/bin:/Users/barthoekstra/anaconda/bin:/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/bin:/opt/X11/bin:/Library/TeX/texbin:', getenv('PATH')])
+setenv('PATH', ['/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin', getenv('PATH')])
+setenv('DYLD_LIBRARY_PATH',['/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin' getenv('DYLD_LIBRARY_PATH')])
+
 
 profile on;
 
-load('proj_settings.mat');
-load('proj_tracks.mat');
-load('proj_dems.mat');
-load('proj_wind.mat');
+load('proj_settings_2015.mat');
+load('proj_tracks_2015.mat');
+load('proj_dems_2015.mat');
+load('proj_wind_2015.mat');
 
 % Prepare tracks to store orographic lift data
 i = size(tracks, 1);
-tracks.oroglift = zeros(i,1);
+tracks.oroglift_max = zeros(i,1);
+tracks.oroglift_mean = zeros(i,1);
+tracks.oroglift_min = zeros(i,1);
+tracks.dem_altitude = zeros(i,1);
 tracks.wspeed = zeros(i,1);
 tracks.wdir = zeros(i,1);
 tracks.wstation = zeros(i,1);
