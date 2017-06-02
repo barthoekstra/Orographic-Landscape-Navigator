@@ -11,9 +11,10 @@ function [ OrographicLift ] = generateOrographicLiftTile(demfile, nanthreshold, 
 %   5. Wind direction
 %   6. Output filename
 
-    storefile = 0;
-    if nargin > 3
+    if nargin > 5
         storefile = 1;
+    else
+        storefile = 0;
     end
 
     dem = geotiffread(demfile);
