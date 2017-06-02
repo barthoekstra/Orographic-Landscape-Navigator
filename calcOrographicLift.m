@@ -137,7 +137,7 @@ parfor i = 1:n
     cols(cols <= 0 | cols > size(dem, 2)) = []; % Cannot select out of range of DEM, so remove those cols
     
     if wdir ~= 990 && wdir ~= 0 % wdir of 990 means wdir is variable, 0 means no wind
-        orogliftarea = wspeed .* sind(slope(rows, cols)) .* cosd((wdir / 10) - aspect(rows, cols));
+        orogliftarea = wspeed .* sind(slope(rows, cols)) .* cosd(wdir - aspect(rows, cols));
         oroglift_max = nanmax(orogliftarea(:));
         oroglift_min = nanmin(orogliftarea(:));
         oroglift_mean = nanmean(orogliftarea(:));
