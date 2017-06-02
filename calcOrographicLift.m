@@ -104,12 +104,14 @@ n = size(trackselection, 1);
 % Make some variables to store column data in, so we can merge them with
 % the table later on
 wspeed_col   = zeros(n,1);
-wdir_col     = wspeed_col;
-oroglift_max_col = wspeed_col;
-oroglift_min_col = wspeed_col;
-oroglift_mean_col = wspeed_col;
-wstation_col = wspeed_col;
-dem_alt_col = wspeed_col;
+wdir_col     = zeros(n,1);
+oroglift_max_col = zeros(n,1);
+oroglift_min_col = zeros(n,1);
+oroglift_mean_col = zeros(n,1);
+wstation_col = zeros(n,1);
+dem_alt_max_col = zeros(n,1);
+dem_alt_mean_col = zeros(n,1);
+dem_alt_min_col = zeros(n,1);
 
 parfor i = 1:n
     % Change date formatting to get wind data
@@ -121,9 +123,9 @@ parfor i = 1:n
     lon = tracksel.longitude;
     hour = tracksel.hour + 1;
     
-    cWS = getNearestWeatherStation(stations, lat, lon); % closest weather station
+    cws = getNearestWeatherStation(stations, lat, lon); % closest weather station
     
-    windselection = wind(wind.stationID == cWS & wind.date == date ...
+    windselection = wind(wind.stationID == cws & wind.date == date ...
                          & wind.hour == hour, :);
     wspeed = windselection.wspeed_hr / 10; % convert 0.1 m/s to m/s
     wdir   = windselection.wdir;
@@ -145,22 +147,25 @@ parfor i = 1:n
         oroglift_mean = NaN;
     end
     
-    dem_alt = nanmean(nanmean(dem(rows, cols)));
-    
     wspeed_col(i) = wspeed;
     wdir_col(i) = wdir;
     oroglift_max_col(i) = oroglift_max;
     oroglift_min_col(i) = oroglift_min;
     oroglift_mean_col(i) = oroglift_mean;
-    wstation_col(i) = cWS;
-    dem_alt_col(i) = dem_alt;
+    wstation_col(i) = cws;
+    
+    dem_alt_max_col(i) = nanmax(nanmax(dem(rows, cols)));
+    dem_alt_mean_col(i) = nanmean(nanmean(dem(rows, cols)));
+    dem_alt_min_col(i) = nanmin(nanmin(dem(rows, cols)));
     
 end
 
 trackselection.oroglift_max = oroglift_max_col;
 trackselection.oroglift_mean = oroglift_mean_col;
 trackselection.oroglift_min = oroglift_min_col;
-trackselection.dem_altitude = dem_alt_col;
+trackselection.dem_alt_max = dem_alt_max_col;
+trackselection.dem_alt_mean = dem_alt_mean_col;
+trackselection.dem_alt_min = dem_alt_min_col;
 trackselection.wspeed = wspeed_col;
 trackselection.wdir = wdir_col;
 trackselection.wstation = wstation_col;

@@ -17,12 +17,15 @@ load('proj_tracks_2016.mat');
 load('proj_dems_2016.mat');
 load('proj_wind_2016.mat');
 
+
 % Prepare tracks to store orographic lift data
 i = size(tracks, 1);
 tracks.oroglift_max = zeros(i,1);
 tracks.oroglift_mean = zeros(i,1);
 tracks.oroglift_min = zeros(i,1);
-tracks.dem_altitude = zeros(i,1);
+tracks.dem_alt_max = zeros(i,1);
+tracks.dem_alt_mean = zeros(i,1);
+tracks.dem_alt_min = zeros(i,1);
 tracks.wspeed = zeros(i,1);
 tracks.wdir = zeros(i,1);
 tracks.wstation = zeros(i,1);
@@ -62,7 +65,7 @@ profile viewer;
 csvfiles = dir(fullfile(['data/classified/', daterange, '/*.csv']));
 
 classifications = [];
-for i = 1:size(csvfiles,1)
+for i = 1:size(csvfiles, 1)
     csv = readtable([csvfiles(i).folder '/' csvfiles(i).name]);
     classifications = vertcat(classifications, csv);
 end
