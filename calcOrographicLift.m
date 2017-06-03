@@ -14,6 +14,9 @@ function [tracksOroLift] = calcOrographicLift(storpath, filename, trackselection
 filesuffix = '.wgs84.tif';
 filename = char(filename);
 
+% First check if there is anything to calculate, if not, return straight
+% away
+% if size(trackselection, 1) > 0
 % ---------------------------------------------------------------------
 % Merge AHN tiles so orographic lift can also be calculated along edges
 % ---------------------------------------------------------------------
@@ -25,7 +28,7 @@ filename = char(filename);
 % solution for this problem is to merge the tile with all surrounding tiles
 % (when available) and use these to fill in the datagaps
 tiles = struct2table(shaperead('data/ahn_units_wgs84.clipped.shp'));
-ref_tile_name = replace(filename,filesuffix,'');
+ref_tile_name = replace(filename, filesuffix,'');
 ref_tile_name = ref_tile_name(2:end);
 
 ref_tile = tiles(strcmp(ref_tile_name, tiles.UNIT),:);
@@ -130,7 +133,10 @@ parfor i = 1:n
     wspeed = windselection.wspeed_hr / 10; % convert 0.1 m/s to m/s
     wdir   = windselection.wdir;
     
-    [r, c] = setpostn(dem, spatialinfo.SpatialRef, lat, lon);
+    %[r, c] = setpostn(dem, spatialinfo.SpatialRef, lat, lon);
+    [r, c] = latlon2pix(spatialinfo.SpatialRef, lat, lon);
+    r = round(r); c = round(c);
+    
     rows = r-radius:1:r+radius;
     rows(rows <= 0 | rows > size(dem, 1)) = []; % Cannot select out of range of DEM, so remove these rows
     cols = c-radius:1:c+radius;
@@ -174,6 +180,8 @@ trackselection.wstation = wstation_col;
 tracksOroLift = trackselection;
 
 % Delete merged file
-delete(merged_dem);
+% delete(merged_dem);
 
-end
+% end % if size(trackselection, 1) > 0
+
+end % function end
