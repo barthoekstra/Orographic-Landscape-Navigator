@@ -27,7 +27,7 @@ if action == "merge":
     # Now translate the mosaic to an actual GeoTiff
     # Cmd format: gdal_translate -of GTiff mosaic.vrt output.tif
     mergedfile = sys.argv[2].replace(".wgs84.tif", ".merged.wgs84.vrt")
-    cmd_merge = "gdal_translate -of GTiff %s %s" % (targetvrt, targetfile)
+    cmd_merge = "gdal_translate -a_srs \"+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs\" -of GTiff %s %s" % (targetvrt, targetfile)
     os.system(cmd_merge)
 
     # Now remove the .vrt
