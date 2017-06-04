@@ -85,7 +85,7 @@ classified_tracks = innerjoin(tracks, classifications);
 n = size(classified_tracks, 1);
 IDs = [1:1:n]';
 classified_tracks.ID = IDs;
-classified_tracks = [classified_tracks(:,36), classified_tracks(:,1:35)];
+classified_tracks = [classified_tracks(:,38), classified_tracks(:,1:37)];
 
 save(['proj_tracks_classified_', daterange, '.mat'], 'classified_tracks');
 
