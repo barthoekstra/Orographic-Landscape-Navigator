@@ -65,6 +65,7 @@ octave-workspace
 *.txt
 *.qpj
 *.mat
+*.csv
 
 OroLift
 ThesisGEarthTest
