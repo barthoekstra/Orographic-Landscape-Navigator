@@ -108,13 +108,15 @@ n = size(trackselection, 1);
 % the table later on
 wspeed_col   = zeros(n,1);
 wdir_col     = zeros(n,1);
+wstation_col = zeros(n,1);
 oroglift_max_col = zeros(n,1);
 oroglift_min_col = zeros(n,1);
 oroglift_mean_col = zeros(n,1);
-wstation_col = zeros(n,1);
 dem_alt_max_col = zeros(n,1);
 dem_alt_mean_col = zeros(n,1);
 dem_alt_min_col = zeros(n,1);
+asp_mode_col = zeros(n,1);
+asp_std_col = zeros(n,1);
 
 parfor i = 1:n
     % Change date formatting to get wind data
@@ -153,16 +155,26 @@ parfor i = 1:n
         oroglift_mean = NaN;
     end
     
+    % Wind
     wspeed_col(i) = wspeed;
     wdir_col(i) = wdir;
+    wstation_col(i) = cws;
+    
+    % Orographic Lift
     oroglift_max_col(i) = oroglift_max;
     oroglift_min_col(i) = oroglift_min;
     oroglift_mean_col(i) = oroglift_mean;
-    wstation_col(i) = cws;
     
+    % Digital elevation model
     dem_alt_max_col(i) = nanmax(nanmax(dem(rows, cols)));
     dem_alt_mean_col(i) = nanmean(nanmean(dem(rows, cols)));
     dem_alt_min_col(i) = nanmin(nanmin(dem(rows, cols)));
+    
+    % Landscape characteristics
+    asp = aspect(rows, cols);
+    asp = asp(:);
+    asp_mode_col(i) = mode(mode(round(asp, -1)));
+    asp_std_col(i) = std(asp);
     
 end
 
@@ -175,6 +187,8 @@ trackselection.dem_alt_min = dem_alt_min_col;
 trackselection.wspeed = wspeed_col;
 trackselection.wdir = wdir_col;
 trackselection.wstation = wstation_col;
+trackselection.asp_mode = asp_mode_col;
+trackselection.asp_std = asp_std_col;
 
 % Return annotated tracks
 tracksOroLift = trackselection;

@@ -29,6 +29,8 @@ tracks.dem_alt_min = zeros(i,1);
 tracks.wspeed = zeros(i,1);
 tracks.wdir = zeros(i,1);
 tracks.wstation = zeros(i,1);
+tracks.asp_mode = zeros(i,1);
+tracks.asp_std = zeros(i,1);
 
 n = size(dems, 1);
 
