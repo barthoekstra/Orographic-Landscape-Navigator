@@ -26,7 +26,7 @@ adl_min = 0; % adl = above dem level
 adl_max = 25;
 
 soaring = tracks(tracks.class_id == 3 & tracks.altitude_adl > adl_min & ...
-                 tracks.altitude_adl <= 25, :);
+                 tracks.altitude_adl <= adl_max, :);
              
 %% Determine consecutive track lengths
 % In order to find high-resolution and highly accurate tracks, we determine

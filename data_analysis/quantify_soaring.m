@@ -23,8 +23,16 @@ n_years = size(years, 1);
 
 % Orographic lift parameters
 max_meters = 30;
-oroglift_min = 0.9;
-oroglift_max = 4.2;
+oroglift_min_all = 0.8141; % minimum value hg + lbbg combined
+oroglift_max_all = 4.2078; % maximum value hg + lbbg combined
+oroglift_min_hg = 0.7695; % minimum value hg
+oroglift_max_hg = 4.1916; % maximum value hg
+oroglift_min_lbbg = 0.8505; % minimum value lbbg
+oroglift_max_lbbg = 4.3115; % maximum value lbbg
+
+% Set the values used for the analysis below here:
+oroglift_min = oroglift_min_all;
+oroglift_max = oroglift_max_all;
 
 % Prepare columns
 n_obs_year = [];
