@@ -100,13 +100,20 @@ quantified = table(device, year, project, n_obs_year, n_flight_obs_year, ...
 % Now calculate the fractions and convert them to percentages
 quantified.frac_flight = quantified.n_flight ./ quantified.n_obs .* 100; % flight of all obs
 quantified.frac_soar = quantified.n_soaring ./ quantified.n_obs .* 100; % soaring of all obs
-quantified.frac_soar_flight = quantified.n_soaring ./ quantified.n_flight .* 100; % soaring of all flight obs
 quantified.frac_oroglift = quantified.n_oroglift ./ quantified.n_obs .* 100; % oroglift soaring of all obs
+quantified.frac_soar_flight = quantified.n_soaring ./ quantified.n_flight .* 100; % soaring of all flight obs
 quantified.frac_oroglift_flight = quantified.n_oroglift ./ quantified.n_flight .* 100; % oroglift soaring of all flight obs
 quantified.frac_oroglift_soaring = quantified.n_oroglift ./ quantified.n_soaring .* 100; % oroglift soaring of all soaring obs
-quantified.frac_oroglift_all = quantified.n_oroglift_all ./ quantified.n_obs .* 100; % altitude independent orographic lift soaring of all obs
-quantified.frac_oroglift_flight = quantified.n_oroglift_all ./ quantified.n_flight .* 100; % altitude independent oroglift soaring of all flight obs
-quantified.frac_oroglift_soaring_all = quantified.n_oroglift_all ./ quantified.n_soaring .* 100; % altitude independent oroglift soaring of all soaring obs
+quantified.frac_oroglift_all_altitudes = quantified.n_oroglift_all ./ quantified.n_obs .* 100; % altitude independent orographic lift soaring of all obs
+quantified.frac_oroglift_flight_all_altitudes = quantified.n_oroglift_all ./ quantified.n_flight .* 100; % altitude independent oroglift soaring of all flight obs
+quantified.frac_oroglift_soaring_all_altitudes = quantified.n_oroglift_all ./ quantified.n_soaring .* 100; % altitude independent oroglift soaring of all soaring obs
+
+% The following are in the thesis and prefixed with r_
+quantified.r_frac_flight = quantified.n_flight ./ quantified.n_obs .* 100; % percentage flight of all observations
+quantified.r_frac_soaring_flight = quantified.n_soaring ./ quantified.n_flight .* 100; % percentage soaring flight of all flight observations
+quantified.r_frac_oroglift_all_altitudes = quantified.n_oroglift_all ./ quantified.n_soaring .* 100; % percentage soaring flight over landscape causing threshold values of orographic lift
+quantified.r_frac_oroglift_soaring_threshold = quantified.n_oroglift ./ quantified.n_soaring .* 100; % percentage soaring flight over landscape causing threshold values of orographic lift below max_meters altitude
+
 
 
 %% Plot some of the results
@@ -115,5 +122,97 @@ y = mean(quantified.frac_oroglift_soaring);
 err = std(quantified.frac_oroglift_soaring);
 
 errorbar(x, y, err);
+
+%% Lesser Black-backed Gulls
+% Flight
+% lbbg = quantified(strcmp(quantified.project, 'LBBG_TEXEL') == 1, :);
+% m = mean(lbbg.frac_flight)
+% s = std(lbbg.frac_flight)
+% cv = s / m
+% minimum = min(lbbg.frac_flight)
+% maximum = max(lbbg.frac_flight)
+
+% Soaring
+% m = mean(lbbg.r_frac_soaring_flight)
+% s = std(lbbg.r_frac_soaring_flight)
+% cv = s / m
+% minimum = min(lbbg.r_frac_soaring_flight)
+% maximum = max(lbbg.r_frac_soaring_flight)
+
+% Soaring over landscape causing orographic lift
+% m = mean(lbbg.r_frac_oroglift_all_altitudes)
+% s = std(lbbg.r_frac_oroglift_all_altitudes)
+% cv = s / m
+% minimum = min(lbbg.r_frac_oroglift_all_altitudes)
+% maximum = max(lbbg.r_frac_oroglift_all_altitudes)
+
+% Soaring over landscape causing orographic lift at an altitude up to 25m
+% l25 = lbbg.r_frac_oroglift_soaring_threshold(:, 25);
+% m = mean(l25)
+% s = std(l25)
+% cv = s / m
+% minimum = min(l25)
+% maximum = max(l25)
+
+% Soaring over landscape causing orographic lift at an altitude up to 10m
+% l10 = lbbg.r_frac_oroglift_soaring_threshold(:, 10);
+% m = mean(l10)
+% s = std(l10)
+% cv = s / m
+% minimum = min(l10)
+% maximum = max(l10)
+
+%% Herring Gulls
+% Flight
+% hg = quantified(strcmp(quantified.project, 'HG_TEXEL') == 1, :);
+% m = mean(hg.frac_flight)
+% s = std(hg.frac_flight)
+% cv = s / m
+% minimum = min(hg.frac_flight)
+% maximum = max(hg.frac_flight)
+
+% Soaring
+% m = mean(hg.r_frac_soaring_flight)
+% s = std(hg.r_frac_soaring_flight)
+% cv = s / m
+% minimum = min(hg.r_frac_soaring_flight)
+% maximum = max(hg.r_frac_soaring_flight)
+
+% Soaring over landscape causing orographic lift
+% m = mean(hg.r_frac_oroglift_all_altitudes)
+% s = std(hg.r_frac_oroglift_all_altitudes)
+% cv = s / m
+% minimum = min(hg.r_frac_oroglift_all_altitudes)
+% maximum = max(hg.r_frac_oroglift_all_altitudes)
+
+% Soaring over landscape causing orographic lift at an altitude up to 25m
+% l25 = hg.r_frac_oroglift_soaring_threshold(:, 25);
+% m = mean(l25)
+% s = std(l25)
+% cv = s / m
+% minimum = min(l25)
+% maximum = max(l25)
+
+% Soaring over landscape causing orographic lift at an altitude up to 10m
+% l10 = hg.r_frac_oroglift_soaring_threshold(:, 10);
+% m = mean(l10)
+% s = std(l10)
+% cv = s / m
+% minimum = min(l10)
+% maximum = max(l10)
+
+%% Compare species
+ranksum(lbbg.r_frac_flight, hg.r_frac_flight); % p = 0.9871 - No significant difference between groups
+ranksum(lbbg.r_frac_soaring_flight, hg.r_frac_soaring_flight); % p = 0.717 - No significant difference between groups
+ranksum(lbbg.r_frac_oroglift_all_altitudes, hg.r_frac_oroglift_all_altitudes); % p = 0.0033 - Significant difference between groups
+
+ql25hg = hg.r_frac_oroglift_soaring_threshold(:, 25);
+ql25lbbg = lbbg.r_frac_oroglift_soaring_threshold(:, 25);
+ranksum(ql25hg, ql25lbbg); % p = 0.0055 - Significant differences between groups
+
+ql10hg = hg.r_frac_oroglift_soaring_threshold(:, 10);
+ql10lbbg = lbbg.r_frac_oroglift_soaring_threshold(:, 10);
+ranksum(ql10hg, ql10lbbg); % p = 0.0099 - Significant differences between groups
+
 
 
