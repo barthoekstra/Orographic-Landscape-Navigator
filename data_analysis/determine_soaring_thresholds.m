@@ -28,6 +28,8 @@ adl_max = 25;
 soaring = tracks(tracks.class_id == 3 & tracks.altitude_adl > adl_min & ...
                  tracks.altitude_adl <= adl_max, :);
              
+soaring_all = tracks(tracks.class_id == 3, :);
+             
 %% Determine consecutive track lengths
 % In order to find high-resolution and highly accurate tracks, we determine
 % the length of consecutively increasing ID integers. So [1, 2, 3, 4, 6]
@@ -207,32 +209,13 @@ orog_soaring = tracks(tracks.oroglift_max >= oroglift_lower_bound & ...
                       tracks.altitude_adl < 100 & ...
                       tracks.altitude_adl > 0 & ...
                       tracks.class_id == 3, :);
-%%
-% figure;
-% subplot(1,3,1);
-%     plot(x, y1, 'DisplayName', 'Orographic lift soaring', 'LineWidth', 2);
-%     hold on;
-%     plot(x, y2, 'DisplayName', 'Orographic lift soaring (long)', 'LineWidth', 2);
-%     plot(x, yrandom, 'DisplayName', 'Background lift', 'LineWidth', 2, 'Color', [0.4 0.4 0.4]);
-%     legend('show');
-%     title('Orographic lift rates: soaring vs background');
-%     ylabel('Probability density');
-%     xlabel('Orographic lift [m/s]');
-% subplot(1,3,2);
-%     plot(x, y1hg, 'DisplayName', 'Orographic lift soaring', 'LineWidth', 2);
-%     hold on;
-%     plot(x, y2hg, 'DisplayName', 'Orographic lift soaring (long)', 'LineWidth', 2);
-%     plot(x, yrandom, 'DisplayName', 'Background lift', 'LineWidth', 2, 'Color', [0.4 0.4 0.4]);
-%     legend('show');
-%     title('Orographic lift rates: soaring vs background in Herring Gulls');
-%     ylabel('Probability density');
-%     xlabel('Orographic lift [m/s]');
-% subplot(1,3,3);
-%     plot(x, y1lbbg, 'DisplayName', 'Orographic lift soaring', 'LineWidth', 2);
-%     hold on;
-%     plot(x, y2lbbg, 'DisplayName', 'Orographic lift soaring (long)', 'LineWidth', 2);
-%     plot(x, yrandom, 'DisplayName', 'Background lift', 'LineWidth', 2, 'Color', [0.4 0.4 0.4]);
-%     legend('show');
-%     title('Orographic lift rates: soaring vs background in Lesser Black-backed Gulls');
-%     ylabel('Probability density');
-%     xlabel('Orographic lift [m/s]');
+%% Influence of wind direction and landscape aspect
+pd_landscape_soaring = fitdist(hr_soaring.landscape, 'Kernel');
+pd_landscape_flapping = fitdist(flapping.landscape, 'Kernel');
+x = -10:1:360;
+y1 = pdf(pd_landscape_soaring, x);
+y2 = pdf(pd_landscape_flapping, x);
+figure;
+plot(x, y1);
+hold on;
+plot(x, y2);
