@@ -30,7 +30,8 @@ random = random(random.dem_alt_max ~= 0, :);
 % extreme flapping tracks have class 1 and 2 respectively. Since manouvre,
 % the last class type in this dataset is intermediate between soaring and
 % flapping, we leave this out.
-soaring = tracks(tracks.class_id == 3, :);
+%soaring = tracks(tracks.class_id == 3, :);
+soaring = tracks(tracks.class_id == 3 & tracks.altitude_adl > 0 & tracks.altitude_adl <= 25, :);
 flapping = tracks(tracks.class_id == 1 | tracks.class_id == 2, :);
 
 %% Determine consecutive track lengths
@@ -94,7 +95,7 @@ set(gca, 'FontSize', fontsize, 'LineWidth', axislinewidth);
 hold on;
 plot(x, y_random, 'DisplayName', 'Randomized tracks', 'LineWidth', 2, 'Color', [0.5 0.5 0.5], 'LineStyle', '-.');
 plot(x, y_both_species, 'DisplayName', 'Actual tracks', 'LineWidth', 2);
-title({'\bf\fontsize{14} Herring & Lesser Black-backed Gulls', ...
+title({'\bf\fontsize{14} Herring & Lesser Black-backed Gulls (> 4 consecutive)', ...
        '\rm\fontsize{12} Orographic lift soaring rates: 0.95 - 4.20 [m/s]'}); % add these values manually
 xlabel('Orographic lift [m/s]', 'FontSize', fontsize); 
 ylabel('Probability density', 'FontSize', fontsize);
@@ -125,7 +126,7 @@ subplot(1,2,1);
     hold on;
     plot(x, y_random, 'DisplayName', 'Randomized tracks', 'LineWidth', 2, 'Color', [0.5 0.5 0.5], 'LineStyle', '-.');
     plot(x, y_hg, 'DisplayName', 'Actual tracks', 'LineWidth', 2);
-    title({'\bf\fontsize{14} Herring Gull', ...
+    title({'\bf\fontsize{14} Herring Gull (> 4 consecutive)', ...
            '\rm\fontsize{12} Orographic lift soaring rates: 0.93 - 4.18 [m/s]'}); % add these values manually
     xlabel('Orographic lift [m/s]', 'FontSize', fontsize); 
     ylabel('Probability density', 'FontSize', fontsize);
@@ -138,7 +139,7 @@ subplot(1,2,2);
     hold on;
     plot(x, y_random, 'DisplayName', 'Randomized tracks', 'LineWidth', 2, 'Color', [0.5 0.5 0.5], 'LineStyle', '-.');
     plot(x, y_lbbg, 'DisplayName', 'Actual tracks', 'LineWidth', 2);
-    title({'\bf\fontsize{14} Lesser Black-backed Gull', ...
+    title({'\bf\fontsize{14} Lesser Black-backed Gull (> 4 consecutive)', ...
            '\rm\fontsize{12} Orographic lift soaring rates: 0.99 - 4.33 [m/s]'}); % add these values manually
     xlabel('Orographic lift [m/s]', 'FontSize', fontsize); 
     ylabel('Probability density', 'FontSize', fontsize);
@@ -154,7 +155,7 @@ hold on;
 plot(x, y_random, 'DisplayName', 'Randomized tracks', 'LineWidth', 2, 'Color', [0.5 0.5 0.5], 'LineStyle', '-.');
 plot(x, y_hg, 'DisplayName', 'Herring Gull', 'LineWidth', 2);
 plot(x, y_lbbg, 'DisplayName', 'Lesser Black-backed Gull', 'LineWidth', 2);
-title({'\bf\fontsize{14} Species comparison'});
+title({'\bf\fontsize{14} Species comparison (> 4 consecutive)'});
 xlabel('Orographic lift [m/s]', 'FontSize', fontsize); 
 ylabel('Probability density', 'FontSize', fontsize);
 legend('show');
@@ -280,9 +281,7 @@ cv_lbbg_all = std_lbbg_all / mean_lbbg_all
 % Visually, species appear to respond differently to orographic lift, but
 % are these effects significant? Again we use Wilcoxon-Mann-Whitney to
 % compare the groups
-ranksum(soaring_all_hg.oroglift_max, soaring_all_lbbg.oroglift_max) % p = 5.4527e-13 - Significant difference between groups
 [h, p, ks2stat] = kstest2(soaring_all_hg.oroglift_max, soaring_all_lbbg.oroglift_max) % h = 1; p = 4.5028e-48; ks2stat = 0.0775
-ranksum(hr_soaring_hg.oroglift_max, hr_soaring_lbbg.oroglift_max) % p = 0.0012 - Significant difference between groups
 [h, p, ks2stat] = kstest2(hr_soaring_hg.oroglift_max, hr_soaring_lbbg.oroglift_max) % h = 1; p = 3.0698e-05; ks2stat = 0.0362
 
 % This corroborates the visuals: both groups are significantly different in
@@ -371,3 +370,131 @@ xlabel('Wind speed [m/s]', 'FontSize', fontsize);
 ylabel('Probability density', 'FontSize', fontsize);
 legend('show');
 hold off;
+
+%% Summary statistics
+mean_all = mean(soaring.wspeed)
+mode_all = mode(soaring.wspeed)
+std_all = std(soaring.wspeed)
+cv_all = std_all / mean_all
+
+mean_hg = mean(soaring_all_hg.wspeed)
+mode_hg = mode(soaring_all_hg.wspeed)
+std_hg = std(soaring_all_hg.wspeed)
+cv_all = std_hg / mean_hg
+
+mean_lbbg = mean(soaring_all_lbbg.wspeed)
+mode_lbbg = mode(soaring_all_lbbg.wspeed)
+std_lbbg = std(soaring_all_lbbg.wspeed)
+cv_lbbg = std_lbbg / mean_lbbg
+
+%% Angle of incidence
+% We are interested in the angle of incidence between the direction of the
+% wind and the landscape aspect. In order to analyse this we, obviously,
+% have to calculate this first. The angle of incidence is the difference
+% between the direction of the wind and the direction of the landscape
+% aspect in degrees between -180 and +180, but for this analysis we may
+% decide to only use the absolute value of the incidence. We calculate it
+% as follows:
+% atan2d(sind(wdir - aspect), cosd(wdir - aspect))
+random.incidence = atan2d(sind(random.wdir - random.asp_mode), cosd(random.wdir - random.asp_mode));
+soaring.incidence = atan2d(sind(soaring.wdir - soaring.asp_mode), cosd(soaring.wdir - soaring.asp_mode));
+soaring_all_hg.incidence = atan2d(sind(soaring_all_hg.wdir - soaring_all_hg.asp_mode), cosd(soaring_all_hg.wdir - soaring_all_hg.asp_mode));
+soaring_all_lbbg.incidence = atan2d(sind(soaring_all_lbbg.wdir - soaring_all_lbbg.asp_mode), cosd(soaring_all_lbbg.wdir - soaring_all_lbbg.asp_mode));
+
+%%
+% Create the plot for both species combined
+pd_soaring_incidence = fitdist(soaring.incidence, 'Kernel');
+pd_random_incidence = fitdist(random.incidence, 'Kernel');
+x = -180:1:180;
+y_both_species_incidence = pdf(pd_soaring_incidence, x); % Both species of gulls combined
+y_random_incidence = pdf(pd_random_incidence, x);
+
+[x_soaring_windspeed, ~] = intersections(x, y_random_incidence, x, y_both_species_incidence, 1)
+
+figure(10);
+pos = get(gcf, 'Position');
+set(gcf, 'Position', [pos(1) pos(2) width * 100, height * 100]);
+set(gca, 'FontSize', fontsize, 'LineWidth', axislinewidth);
+hold on;
+plot(x, y_random_incidence, 'DisplayName', 'Randomized tracks', 'LineWidth', 2, 'Color', [0.5 0.5 0.5], 'LineStyle', '-.');
+plot(x, y_both_species_incidence, 'DisplayName', 'Actual tracks', 'LineWidth', 2);
+title({'\bf\fontsize{14} Herring & Lesser Black-backed Gulls', ...
+       '\rm\fontsize{12} Wind angle of incidence: -70 - 54 [\circ]'}); % add these values manually
+xlabel('Wind angle of incidence [\circ]', 'FontSize', fontsize); 
+ylabel('Probability density', 'FontSize', fontsize);
+xlim([-180 180]);
+legend('show');
+hold off;
+
+mean_all = mean(soaring.incidence)
+mode_all = mode(soaring.incidence)
+median_all = median(soaring.incidence)
+std_all = std(soaring.incidence)
+
+% Species seperately
+pd_soaring_hg_incidence = fitdist(soaring_all_hg.incidence, 'Kernel');
+pd_soaring_lbbg_incidence = fitdist(soaring_all_lbbg.incidence, 'Kernel');
+
+y_hg_incidence = pdf(pd_soaring_hg_incidence, x);
+y_lbbg_incidence = pdf(pd_soaring_lbbg_incidence, x);
+
+[x_soaring_hg_incidence, ~] = intersections(x, y_random_incidence, x, y_hg_incidence, 1)
+[x_soaring_lbbg_incidence, ~] = intersections(x, y_random_incidence, x, y_lbbg_incidence, 1)
+
+figure(11);
+pos = get(gcf, 'Position');
+set(gcf, 'Position', [pos(1) pos(2) width * 200, height * 100]);
+
+% Herring Gull
+subplot(1,2,1);
+    set(gca, 'FontSize', fontsize, 'LineWidth', axislinewidth);
+    hold on;
+    plot(x, y_random_incidence, 'DisplayName', 'Randomized tracks', 'LineWidth', 2, 'Color', [0.5 0.5 0.5], 'LineStyle', '-.');
+    plot(x, y_hg_incidence, 'DisplayName', 'Actual tracks', 'LineWidth', 2);
+    title({'\bf\fontsize{14} Herring Gull', ...
+           '\rm\fontsize{12} Wind angle of incidence: -71 - 54 [\circ]'}); % add these values manually
+    xlabel('Wind speed [m/s]', 'FontSize', fontsize); 
+    ylabel('Probability density', 'FontSize', fontsize);
+    legend('show');
+    xlim([-180 180]);
+    hold off;
+    
+% Lesser Black-backed Gull
+subplot(1,2,2);
+    set(gca, 'FontSize', fontsize, 'LineWidth', axislinewidth);
+    hold on;
+    plot(x, y_random_incidence, 'DisplayName', 'Randomized tracks', 'LineWidth', 2, 'Color', [0.5 0.5 0.5], 'LineStyle', '-.');
+    plot(x, y_lbbg_incidence, 'DisplayName', 'Actual tracks', 'LineWidth', 2);
+    title({'\bf\fontsize{14} Lesser Black-backed Gull', ...
+           '\rm\fontsize{12} Wind angle of incidence: -71 - 55 [\circ]'}); % add these values manually
+    xlabel('Wind speed [m/s]', 'FontSize', fontsize); 
+    ylabel('Probability density', 'FontSize', fontsize);
+    legend('show');
+    xlim([-180 180]);
+    hold off;
+    
+% And finally plot them together in 1 figure
+figure(12);
+pos = get(gcf, 'Position');
+set(gcf, 'Position', [pos(1) pos(2) width * 100, height * 100]);
+set(gca, 'FontSize', fontsize, 'LineWidth', axislinewidth);
+hold on;
+plot(x, y_random_incidence, 'DisplayName', 'Randomized tracks', 'LineWidth', 2, 'Color', [0.5 0.5 0.5], 'LineStyle', '-.');
+plot(x, y_hg_incidence, 'DisplayName', 'Herring Gull', 'LineWidth', 2);
+plot(x, y_lbbg_incidence, 'DisplayName', 'Lesser Black-backed Gull', 'LineWidth', 2);
+title({'\bf\fontsize{14} Species comparison'});
+xlabel('Wind incidence angle [\circ]', 'FontSize', fontsize); 
+ylabel('Probability density', 'FontSize', fontsize);
+legend('show');
+xlim([-180 180]);
+hold off;
+
+mean_hg = mean(soaring_all_hg.incidence)
+mode_hg = mode(soaring_all_hg.incidence)
+median_hg = median(soaring_all_hg.incidence)
+std_hg = std(soaring_all_hg.incidence)
+
+mean_lbbg = mean(soaring_all_lbbg.incidence)
+mode_lbbg = mode(soaring_all_lbbg.incidence)
+median_lbbg = median(soaring_all_lbbg.incidence)
+std_lbbg = std(soaring_all_lbbg.incidence)
