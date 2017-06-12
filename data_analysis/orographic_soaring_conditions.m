@@ -387,6 +387,13 @@ mode_lbbg = mode(soaring_all_lbbg.wspeed)
 std_lbbg = std(soaring_all_lbbg.wspeed)
 cv_lbbg = std_lbbg / mean_lbbg
 
+%% Statistical test
+% Comparison with random tracks
+[h, p, ks2stat] = kstest2(random.wspeed, soaring.wspeed) % h = 1; p = 0; ks2stat = 0.1747
+
+% Species comparison
+[h, p, ks2stat] = kstest2(soaring_all_hg.wspeed, soaring_all_lbbg.wspeed) % h = 1; p = 3.3246e-04; ks2stat = 0.0218
+
 %% Angle of incidence
 % We are interested in the angle of incidence between the direction of the
 % wind and the landscape aspect. In order to analyse this we, obviously,
@@ -396,6 +403,7 @@ cv_lbbg = std_lbbg / mean_lbbg
 % decide to only use the absolute value of the incidence. We calculate it
 % as follows:
 % atan2d(sind(wdir - aspect), cosd(wdir - aspect))
+tracks.incidence = atan2d(sind(tracks.wdir - tracks.asp_mode), cosd(tracks.wdir - tracks.asp_mode));
 random.incidence = atan2d(sind(random.wdir - random.asp_mode), cosd(random.wdir - random.asp_mode));
 soaring.incidence = atan2d(sind(soaring.wdir - soaring.asp_mode), cosd(soaring.wdir - soaring.asp_mode));
 soaring_all_hg.incidence = atan2d(sind(soaring_all_hg.wdir - soaring_all_hg.asp_mode), cosd(soaring_all_hg.wdir - soaring_all_hg.asp_mode));
@@ -498,3 +506,10 @@ mean_lbbg = mean(soaring_all_lbbg.incidence)
 mode_lbbg = mode(soaring_all_lbbg.incidence)
 median_lbbg = median(soaring_all_lbbg.incidence)
 std_lbbg = std(soaring_all_lbbg.incidence)
+
+%% Statistical test
+% Comparison with random tracks
+[h, p, ks2stat] = kstest2(random.incidence, soaring.incidence) % h = 1; p = 0; ks2stat = 0.1934
+
+% Species comparison
+[h, p, ks2stat] = kstest2(soaring_all_hg.incidence, soaring_all_lbbg.incidence) % h = 1; p = 3.4658e-79; ks2stat = 0.0996
