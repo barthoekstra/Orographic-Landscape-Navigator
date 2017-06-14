@@ -196,6 +196,35 @@ ylabel('Probability density', 'FontSize', fontsize);
 legend('show');
 hold off;
 
+%% Compare with soaring without altitude limit
+% So far we have selected only soaring tracks that are between adl_min and
+% adl_max, but what does the distribution look like when we remove these
+% limits?
+
+% Select a subset of the soaring dataset, but now only select for altitude
+soaring_all_alts = tracks(tracks.class_id == 3, :);
+
+% Create the plot for both species combined
+pd_soaring_all_alts = fitdist(soaring_all_alts.oroglift_max, 'Kernel');
+x = -2:.1:10;
+y_both_species = pdf(pd_soaring_all_alts, x); % Both species of gulls combined
+
+[x_soaring_all_alts, ~] = intersections(x, y_random, x, y_both_species, 1)
+
+figure(4);
+pos = get(gcf, 'Position');
+set(gcf, 'Position', [pos(1) pos(2) width * 100, height * 100]);
+set(gca, 'FontSize', fontsize, 'LineWidth', axislinewidth);
+hold on;
+plot(x, y_random, 'DisplayName', 'Randomized tracks', 'LineWidth', 2, 'Color', [0.5 0.5 0.5], 'LineStyle', '-.');
+plot(x, y_both_species, 'DisplayName', 'Actual tracks', 'LineWidth', 2);
+title({'\bf\fontsize{14} Orographic lift (all soaring altitudes)', ...
+       '\rm\fontsize{12} Herring & Lesser Black-backed Gulls'}); % add these values manually
+xlabel('Orographic lift [m/s]', 'FontSize', fontsize); 
+ylabel('Probability density', 'FontSize', fontsize);
+legend('show');
+hold off;
+
 %% And the differences between species
 % Basically an identical approach to the previous section, but now we look
 % at the species seperately.
