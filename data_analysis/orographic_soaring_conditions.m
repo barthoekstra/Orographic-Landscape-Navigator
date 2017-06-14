@@ -152,10 +152,12 @@ pos = get(gcf, 'Position');
 set(gcf, 'Position', [pos(1) pos(2) width * 100, height * 100]);
 set(gca, 'FontSize', fontsize, 'LineWidth', axislinewidth);
 hold on;
-plot(x, y_random, 'DisplayName', 'Randomized tracks', 'LineWidth', 2, 'Color', [0.5 0.5 0.5], 'LineStyle', '-.');
+plot(x, y_random, 'DisplayName', 'Landscape background', 'LineWidth', 2, 'Color', [0.5 0.5 0.5], 'LineStyle', '-.');
 plot(x, y_hg, 'DisplayName', 'Herring Gull', 'LineWidth', 2);
 plot(x, y_lbbg, 'DisplayName', 'Lesser Black-backed Gull', 'LineWidth', 2);
-title({'\bf\fontsize{14} Species comparison (> 4 consecutive)'});
+title({'\bf\fontsize{14} Species comparison (> 4 consecutive soaring classifications)'});
+title({'\bf\fontsize{14} Orographic Lift in Herring and Lesser Black-backed Gull tracks', ...
+           '\rm\fontsize{12} > 4 consecutive soaring classifications'}); % add these values manually
 xlabel('Orographic lift [m/s]', 'FontSize', fontsize); 
 ylabel('Probability density', 'FontSize', fontsize);
 legend('show');
@@ -244,10 +246,12 @@ pos = get(gcf, 'Position');
 set(gcf, 'Position', [pos(1) pos(2) width * 100, height * 100]);
 set(gca, 'FontSize', fontsize, 'LineWidth', axislinewidth);
 hold on;
-plot(x, y_random, 'DisplayName', 'Randomized tracks', 'LineWidth', 2, 'Color', [0.5 0.5 0.5], 'LineStyle', '-.');
+plot(x, y_random, 'DisplayName', 'Landscape background', 'LineWidth', 2, 'Color', [0.5 0.5 0.5], 'LineStyle', '-.');
 plot(x, y_all_hg, 'DisplayName', 'Herring Gull', 'LineWidth', 2);
 plot(x, y_all_lbbg, 'DisplayName', 'Lesser Black-backed Gull', 'LineWidth', 2);
-title({'\bf\fontsize{14} Species comparison'});
+%title({'\bf\fontsize{14} Species comparison'});
+title({'\bf\fontsize{14} Orographic Lift in Herring and Lesser Black-backed Gull tracks', ...
+           '\rm\fontsize{12} HG: 0.80 - 4.23 / LBBG: 0.85 - 6.50 [m/s]'}); % add these values manually
 xlabel('Orographic lift [m/s]', 'FontSize', fontsize); 
 ylabel('Probability density', 'FontSize', fontsize);
 legend('show');
@@ -279,15 +283,16 @@ cv_lbbg_all = std_lbbg_all / mean_lbbg_all
 
 %% Compare species
 % Visually, species appear to respond differently to orographic lift, but
-% are these effects significant? Again we use Wilcoxon-Mann-Whitney to
+% are these effects significant? Again we use Kolmogorov-Smirnov to
 % compare the groups
 [h, p, ks2stat] = kstest2(soaring_all_hg.oroglift_max, soaring_all_lbbg.oroglift_max) % h = 1; p = 4.5028e-48; ks2stat = 0.0775
-[h, p, ks2stat] = kstest2(hr_soaring_hg.oroglift_max, hr_soaring_lbbg.oroglift_max) % h = 1; p = 3.0698e-05; ks2stat = 0.0362
+[h, p, ks2stat] = kstest2(hr_soaring_hg.oroglift_max, hr_soaring_lbbg.oroglift_max) % h = 0; p = 0.0874; ks2stat = 0.0212
 
 % This corroborates the visuals: both groups are significantly different in
-% both the hr_soaring and overall soaring groups.
+% general soaring conditions, however, when comparing optimal situations
+% (hr_soaring), there is no significant difference
 
-%% Wind speed and wind direction relative to landscape aspect
+%% Wind speed
 % We have looked at orographic lift rates, but we can do something similar
 % to determine the thresholds for orographic lift soaring in terms of wind
 % speed and wind direction relative to the landscape aspect. Assessing wind
@@ -362,10 +367,12 @@ pos = get(gcf, 'Position');
 set(gcf, 'Position', [pos(1) pos(2) width * 100, height * 100]);
 set(gca, 'FontSize', fontsize, 'LineWidth', axislinewidth);
 hold on;
-plot(x, y_random_windspeed, 'DisplayName', 'Randomized tracks', 'LineWidth', 2, 'Color', [0.5 0.5 0.5], 'LineStyle', '-.');
+plot(x, y_random_windspeed, 'DisplayName', 'Landscape background', 'LineWidth', 2, 'Color', [0.5 0.5 0.5], 'LineStyle', '-.');
 plot(x, y_hg_windspeed, 'DisplayName', 'Herring Gull', 'LineWidth', 2);
 plot(x, y_lbbg_windspeed, 'DisplayName', 'Lesser Black-backed Gull', 'LineWidth', 2);
-title({'\bf\fontsize{14} Species comparison'});
+%title({'\bf\fontsize{14} Species comparison'});
+title({'\bf\fontsize{14} Wind speeds in Herring and Lesser Black-backed Gull tracks', ...
+           '\rm\fontsize{12} HG: 4 - 11 / LBBG: 5 - 10 [m/s]'}); % add these values manually
 xlabel('Wind speed [m/s]', 'FontSize', fontsize); 
 ylabel('Probability density', 'FontSize', fontsize);
 legend('show');
@@ -480,22 +487,25 @@ subplot(1,2,2);
     legend('show');
     xlim([-180 180]);
     hold off;
-    
-% And finally plot them together in 1 figure
+
+%% And finally plot them together in 1 figure
 figure(12);
 pos = get(gcf, 'Position');
 set(gcf, 'Position', [pos(1) pos(2) width * 100, height * 100]);
 set(gca, 'FontSize', fontsize, 'LineWidth', axislinewidth);
 hold on;
-plot(x, y_random_incidence, 'DisplayName', 'Randomized tracks', 'LineWidth', 2, 'Color', [0.5 0.5 0.5], 'LineStyle', '-.');
+plot(x, y_random_incidence, 'DisplayName', 'Landscape background', 'LineWidth', 2, 'Color', [0.5 0.5 0.5], 'LineStyle', '-.');
 plot(x, y_hg_incidence, 'DisplayName', 'Herring Gull', 'LineWidth', 2);
 plot(x, y_lbbg_incidence, 'DisplayName', 'Lesser Black-backed Gull', 'LineWidth', 2);
-title({'\bf\fontsize{14} Species comparison'});
+%title({'\bf\fontsize{14} Species comparison'});
+title({'\bf\fontsize{14} Wind incidence angle in Herring and Lesser Black-backed Gull tracks', ...
+           '\rm\fontsize{12} HG: -71 ? 54 / LBBG: -71 ? 55 [\circ]'}); % add these values manually
 xlabel('Wind incidence angle [\circ]', 'FontSize', fontsize); 
 ylabel('Probability density', 'FontSize', fontsize);
+%xlim([-180 180]);
 legend('show');
-xlim([-180 180]);
 hold off;
+
 
 mean_hg = mean(soaring_all_hg.incidence)
 mode_hg = mode(soaring_all_hg.incidence)
