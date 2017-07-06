@@ -122,7 +122,7 @@ conversionformat = 'yyyymmdd';
 startdate = str2double(datestr(startdatenum, conversionformat));
 enddate   = str2double(datestr(enddatenum, conversionformat));
 
-[wind, stations] = prepWeatherData(['data/weather/', daterange, '/'], 'data/ResearchAreaNH.shp', startdate, enddate);
+[wind, stations] = prepWindData(['data/weather/', daterange, '/'], 'data/ResearchAreaNH.shp', startdate, enddate);
 wind = table(wind(:,1), wind(:,2), wind(:,3), wind(:,4), wind(:,5), wind(:,6), wind(:,7), ...
              'VariableNames', {'stationID', 'date', 'hour', 'wdir', 'wspeed_hr', 'wspeed_10min', 'wspeed_peak'});
 save(['proj_wind_', daterange, '.mat'], 'wind', 'stations');

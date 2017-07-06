@@ -1,4 +1,4 @@
-function [data, stations] = prepWeatherData(storpath, extent, datestart, dateend)
+function [data, stations] = prepWindData(storpath, extent, datestart, dateend)
 %prepWeatherData Downloads, cleans and stores KNMI weather data
 %   Inputs:
 %   1. A path to store the used files at (e.g. data/weather/)
