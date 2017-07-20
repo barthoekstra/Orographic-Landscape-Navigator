@@ -9,7 +9,7 @@ function [used_devices] = prepBirdAccelerometerData(db_user, db_password, device
 %   6. A minimum number of observations per day the query will select
 %   7. Path to a shapefile delineating the research area bounds
 
-%   Example usage (takes approx. 49 min to run):
+%   Example usage:
 %   tracks = prepBirdAccelerometerData2(username, password, devices, '2014-05-01 00:00:00', '2014-07-15 00:00:00', 3600, 'data/ResearchAreaNH.shp', 'data/unclassified');
 %
 %   This script queries the database for accelerometer data for the
@@ -132,7 +132,7 @@ function [used_devices] = prepBirdAccelerometerData(db_user, db_password, device
                 datechar = datechar(1:8);
                 
                 % Store file
-                filename = sprintf('%s/%d/%dd%sb%d', storpath, device_numbers(i), device_numbers(i), datechar, k);
+                filename = sprintf('%s/%dd%sb%d', storpath, device_numbers(i), datechar, k);
                 save(filename, 'data');
                 
                 % Show progress in console
