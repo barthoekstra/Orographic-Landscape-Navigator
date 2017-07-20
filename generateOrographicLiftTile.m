@@ -10,6 +10,10 @@ function [ OrographicLift ] = generateOrographicLiftTile(demfile, nanthreshold, 
 %   4. Wind speed
 %   5. Wind direction
 %   6. Output filename
+%
+%   Output:
+%   1. Orographic lift rates for the entire DEM tile
+%   2. (Optionally: a GeoTIFF containing the orographic lift rates)
 
     if nargin > 5
         storefile = 1;
@@ -43,7 +47,7 @@ function [ OrographicLift ] = generateOrographicLiftTile(demfile, nanthreshold, 
     aspect = aspect + (aspect < 0) * 360; % transform to [0 360]
 
     % Cleanup
-    slope(isnan(slope)) = 0;
+    slope(isnan(slope)) = 0; % remove water bodies
 
     Ca = sind(slope) .* cosd(wdir - aspect);
 
