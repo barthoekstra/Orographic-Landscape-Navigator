@@ -1,7 +1,9 @@
 close all;
 clc;
 
-% Time to define some research variables. 
+% ---------------------------------------------------------------------
+% Research variables
+% ---------------------------------------------------------------------
 
 % Trackers to include in all queries
 devices = csvread('data/devices.csv', 1, 0);
@@ -15,7 +17,7 @@ datetimeformat = 'yyyy-mm-dd HH:MM:SS';
 
 % Filenaming conventions
 % Files are named with their corresponding year or year-range, finer
-% naming could be set below
+% control of naming could be set below
 startyear = datestr(datenum(startdatetime, datetimeformat), 'yyyy');
 endyear = datestr(datenum(enddatetime, datetimeformat), 'yyyy');
 if strcmp(startyear, endyear)
@@ -33,8 +35,7 @@ end
 % minimum number of observations per day is somewhat arbitrary. In the case
 % of LBBG, there are so few records that we use all data and thus the
 % minimum # of observations is set to 0
-% @NOTE: In further calculations, effects have to be corrected for the
-% number of observations in a day (!)
+
 hg_min_obs = 2880; % 'once every 30 seconds' (not really)
 lbbg_min_obs = 0; % Too low data resolution, so we accept everything
 
@@ -47,18 +48,17 @@ highres_lbbg_devices = prepBirdAccelerometerData(db_user, db_pass, ...
     trackers_lbbg, startdatetime, enddatetime, lbbg_min_obs, ...
     'data/ResearchAreaNH.shp', ['data/unclassified/', daterange]);
 
-save(['proj_settings_', daterange, '.mat'], 'db_pass', 'db_user', 'devices', ...
+save(['temp/proj_settings_', daterange, '.mat'], 'db_pass', 'db_user', 'devices', ...
      'enddatetime', 'hg_min_obs', 'highres_hg_devices', ...
      'highres_lbbg_devices', 'lbbg_min_obs', 'startdatetime', ...
      'trackers_hg', 'trackers_lbbg', 'daterange');
  
 %% Prepare accelerometer data files for classification
-%  In order to classify based on the accelerometer, do the following:
-%  1. Copy the folder structure over to the data/ folder of the
-%     classification, so the folder should contain a list of
-%     numbered-folders (corresponding with device IDs with a bunch of .mat
-%     files in them. @NOTE: Make sure code is NOT organized in folders
-%     anymore
+%  In order to classify based on the accelerometer, do the following: 
+%  1. Run the code in this section to generate a paths.txt file containing
+%     paths to all the .mat files with accelerometer data. Subsequently
+%     copy all the .mat files from the data/unclassified/[year] over to the
+%     classifier.
 %  2. Copy the paths from paths.txt over to the settings.properties file of
 %     classifier. All lines are commented out by default. The
 %     fastest/easiest way to do the classification is by uncommenting these
@@ -111,7 +111,7 @@ fclose(fileID);
 %  the tracker data from these moments
 trackers = [highres_hg_devices, highres_lbbg_devices];
 tracks = prepBirdData(db_user, db_pass, trackers, startdatetime, enddatetime, 'data/ResearchAreaNH.shp');
-save(['proj_tracks_', daterange, '.mat'], 'tracks');
+save(['temp/proj_tracks_', daterange, '.mat'], 'tracks');
 
 %% Fetch weather (wind) data
 %  In order to calculate orographic lift, we need wind data for all
@@ -125,14 +125,11 @@ enddate   = str2double(datestr(enddatenum, conversionformat));
 [wind, stations] = prepWindData(['data/weather/', daterange, '/'], 'data/ResearchAreaNH.shp', startdate, enddate);
 wind = table(wind(:,1), wind(:,2), wind(:,3), wind(:,4), wind(:,5), wind(:,6), wind(:,7), ...
              'VariableNames', {'stationID', 'date', 'hour', 'wdir', 'wspeed_hr', 'wspeed_10min', 'wspeed_peak'});
-save(['proj_wind_', daterange, '.mat'], 'wind', 'stations');
+save(['temp/proj_wind_', daterange, '.mat'], 'wind', 'stations');
 
 %% Load DEM info from files
 %  For the sake of simplicity, we are not going to seperately download the
-%  DEM files again. Code is properly documented in the prepDEM file, but
-%  gdal and ogr2ogr commands may have to be called from Python, for which a
-%  script is still to be written
-%  @NOTE: Rewrite gdal and ogr2ogr scripts to a Python version not
-%  dependent on dependencies provided by MATLAB.
+%  DEM files again. Code is properly documented in the prepDEM file. Now we
+%  are only making a table containing the metadata of the DEM tiles.
 dems = loadDEMinfo('data/dem/', '.wgs84.tif', -1e10);
-save(['proj_dems_', daterange, '.mat'], 'dems');
+save(['temp/proj_dems_', daterange, '.mat'], 'dems');
