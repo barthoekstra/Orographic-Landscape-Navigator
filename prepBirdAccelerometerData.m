@@ -42,8 +42,8 @@ function [used_devices] = prepBirdAccelerometerData(db_user, db_password, device
     boundingbox = shape.BoundingBox;
     
     % Setup connection with database
-    % Beware: In order to connect, you have to be on the UvA network or
-    % using a VPN!
+    % Beware: In order to connect, you may have to be on the UvA network or
+    % using a VPN.
     javaaddpath('drivers/postgresql-42.0.0.jre7.jar'); % required Driver
     conn = database('eecology', db_user, db_password, ...
         'org.postgresql.Driver', 'jdbc:postgresql://db.e-ecology.sara.nl:5432/eecology?ssl=true&sslfactory=org.postgresql.ssl.NonValidatingFactory&');
@@ -64,7 +64,7 @@ function [used_devices] = prepBirdAccelerometerData(db_user, db_password, device
         for j = 1:numel(dates)-1    % Iterate through date steps
             
             fprintf('Checking tracker %d for data on daterange %s till %s \n', device_numbers(i), dates(j), dates(j+1))
-            % Turn datevalues into sql-ready strings:
+            % Turn datevalues into SQL-ready strings:
             start = strcat('''', dates(j), '''');
             stop = strcat('''', dates(j+1), '''');
             
