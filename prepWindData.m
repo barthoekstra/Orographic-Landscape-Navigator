@@ -130,8 +130,8 @@ function [data, stations] = prepWindData(storpath, extent, datestart, dateend)
     
     % KNMI weather data always contains quite a few headerlines. In case
     % this script is only used to download wind data, the following is
-    % correct. If more data is selected (by changing vars (above), this
-    % line needs to change.
+    % correct. If more data is selected (by changing vars (above), the
+    % following lines need to change
     headerlines = 15 + size(weatherStations,1);
 
     % Scan the contents of the file
