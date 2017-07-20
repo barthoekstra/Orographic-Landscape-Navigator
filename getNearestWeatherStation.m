@@ -6,6 +6,10 @@ function [wmoid, distance] = getNearestWeatherStation(stns, lat, lon)
 %   2. Latitude of point
 %   3. Longitude of point
 %
+%   Output:
+%   1. A station ID (wmoid)
+%   2. The distance in km from station to the location defined by lat and
+%      lon
 
     n = size(stns, 1);
 
