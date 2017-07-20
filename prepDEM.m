@@ -1,4 +1,4 @@
-function [output_args] = prepDEM(overview, extent, storpath, dimensions, deletefiles)
+function [success] = prepDEM(overview, extent, storpath, dimensions, deletefiles)
 %prepDEM Downloads and converts DEM data
 %   Inputs:
 %   1. A shapefile containing an overview of all AHN tiles (ahn_units.shp)
@@ -10,9 +10,9 @@ function [output_args] = prepDEM(overview, extent, storpath, dimensions, deletef
 %   5. Optional: Should unused files be kept? If yes, set to 0. Unused 
 %      files will be deleted by default
 %
-%   Returns 1 if download and conversion is succesful, 0 if not.
+%   Returns 1 if download and conversion is succesful.
 %
-%   Example use: prepareDEM('data/ahn_units_wgs84.shp','data/ResearchAreaNH2.shp','data/',[2000 2500])
+%   Example use: prepareDEM('data/ahn_units_wgs84.shp','data/ResearchAreaNH.shp','data/',[2000 2500])
 %   
 %   Note: Make sure shapefiles are projected in WGS84 and are all stored in
 %         the same folder.
@@ -97,7 +97,9 @@ function [output_args] = prepDEM(overview, extent, storpath, dimensions, deletef
         end
         
         % Reproject and resize
-        % Construct command with following format:
+        % Reprojection and resizing of the DEM tiles is done using
+        % gdalwarp, a function included in GDAL. The following constructs a
+        % command with the format:
         % gdalwarp pathtosource.tif pathtoreprojected.tif -ts width height ...
         base_reproject = 'gdalwarp "%s" "%sr%s.wgs84.tif" -ts %d %d -r bilinear -t_srs "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs"';
         cmd = sprintf(base_reproject, char(unzipped), dempath, units(i), dimensions(1), dimensions(2));
@@ -111,6 +113,7 @@ function [output_args] = prepDEM(overview, extent, storpath, dimensions, deletef
             delete(char(unzipped))
         end
         
+        % Print progress, even though parfor does not work sequentially
         progress = 'Downloaded and reprojected tile %d out of %d. \n';
         fprintf(progress, i, nr_units);
         
@@ -118,5 +121,5 @@ function [output_args] = prepDEM(overview, extent, storpath, dimensions, deletef
     
     profile viewer
     
-    output_args = 1;
+    success = 1;
 end
