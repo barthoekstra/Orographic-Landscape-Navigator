@@ -1,72 +1,81 @@
-function [tracksOroLift] = calcOrographicLift(storpath, filename, trackselection, stations, wind, cellsize, radius, nanthreshold)
+function [tracksOrogLift] = calcOrographicLift(storpath, filename, trackselection, stations, wind, cellsize, radius, nanthreshold, merge)
 %calcOrographicLift Calculates orographic lift on provided locations
 %   Inputs:
 %   1. Path where DEM tiles are stored (e.g. 'data/dem/')
-%   2. Cellsize in meters
-%   3. Radius around latlon coordinate to select maximum orographic lift
+%   2. The filename of the DEM tiles
+%   3. A selection of the bird tracks that fall within this DEM tile
+%   4. A table containing weather station data
+%   5. A table containing wind data and weather station IDs included in
+%      stations (input 4)
+%   6. Cellsize in meters
+%   7. Radius around latlon coordinate to select maximum orographic lift
 %      from in cells (e.g. with cellsize of 2.5m, a radius of 4 corresponds
 %      with 10m)
-%   4. 
+%   8. Values within the DEM below or equal to this value will be changed
+%      into 0. This is to set the altitude of the sea to 0.
 
 %
 %   setenv('PATH', ['/usr/local/bin:/Users/barthoekstra/anaconda/bin:/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/bin:/opt/X11/bin:/Library/TeX/texbin:', getenv('PATH')])
 
+% Only take these steps if merge is set
+
 filesuffix = '.wgs84.tif';
 filename = char(filename);
 
-% First check if there is anything to calculate, if not, return straight
-% away
-% if size(trackselection, 1) > 0
-% ---------------------------------------------------------------------
-% Merge AHN tiles so orographic lift can also be calculated along edges
-% ---------------------------------------------------------------------
+if merge == 1 
+    % ---------------------------------------------------------------------
+    % Merge AHN tiles so orographic lift can also be calculated along edges
+    % ---------------------------------------------------------------------
+    % Calculating the orographic lift in the middle of the DEM tile is simple,
+    % but it gets more complicated along the edges where possibly no data is
+    % available (due to the projection) or we need to find a value from a
+    % selection of raster points which falls outside of the DEM tile. The only
+    % solution for this problem is to merge the tile with all surrounding tiles
+    % (when available) and use these to fill in the datagaps
+    tiles = struct2table(shaperead('data/ahn_units_wgs84.clipped.shp'));
+    ref_tile_name = replace(filename, filesuffix,'');
+    ref_tile_name = ref_tile_name(2:end);
 
-% Calculating the orographic lift in the middle of the DEM tile is simple,
-% but it gets more complicated along the edges where possibly no data is
-% available (due to the projection) or we need to find a value from a
-% selection of raster points which falls outside of the DEM tile. The only
-% solution for this problem is to merge the tile with all surrounding tiles
-% (when available) and use these to fill in the datagaps
-tiles = struct2table(shaperead('data/ahn_units_wgs84.clipped.shp'));
-ref_tile_name = replace(filename, filesuffix,'');
-ref_tile_name = ref_tile_name(2:end);
+    ref_tile = tiles(strcmp(ref_tile_name, tiles.UNIT),:);
 
-ref_tile = tiles(strcmp(ref_tile_name, tiles.UNIT),:);
+    merge_units = [];
 
-merge_units = [];
+    for i = 1:size(tiles,1)
+       comp_tile = tiles(i,:); % comparison tile
 
-for i = 1:size(tiles,1)
-   comp_tile = tiles(i,:); % comparison tile
-   
-   % Intersect polygons
-   [xi, yi] = polyxpoly(cell2mat(ref_tile.X), cell2mat(ref_tile.Y), ...
-                        cell2mat(comp_tile.X), cell2mat(comp_tile.Y));
-   
-   if ~isempty(xi) && ~isempty(yi)
-       % Apparently there is some intersection. Store the name of this
-       % unit, so we know what to merge later on
-       merge_units = [merge_units, comp_tile.UNIT];
-   end
-   
+       % Intersect polygons
+       [xi, yi] = polyxpoly(cell2mat(ref_tile.X), cell2mat(ref_tile.Y), ...
+                            cell2mat(comp_tile.X), cell2mat(comp_tile.Y));
+
+       if ~isempty(xi) && ~isempty(yi)
+           % Apparently there is some intersection. Store the name of this
+           % unit, so we know what to merge later on
+           merge_units = [merge_units, comp_tile.UNIT];
+       end
+
+    end
+
+    % Now merge the units we have found above as follows:
+    % 1. Make a virtual mosaic of selected (intersecting) files
+    % 2. Turn virtual mosaic into a GeoTiff
+    %
+    % Luckily, calling gisactions.py with the following command does that all
+    % at once (hopefully without causing issues with MATLAB dependencies/libs)
+    files = join(strcat(storpath, 'r', merge_units, filesuffix), ' ');
+    output = strcat(storpath, 'r', ref_tile_name, '.merged', filesuffix);
+    cmd = sprintf('python gisactions.py merge %s %s', output, files);
+
+    [status, cmd] = system(cmd);
+    if status == 1
+        error(cmd)
+    end
+
+    original_dem = [storpath, filename];
+    merged_dem = output;
+else
+    merged_file = replace(filename, '.wgs84.tif', '.merged.wgs84.tif');
+    merged_dem = [storpath, merged_file];
 end
-
-% Now merge the units we have found above as follows:
-% 1. Make a virtual mosaic of selected (intersecting) files
-% 2. Turn virtual mosaic into a GeoTiff
-%
-% Luckily, calling gisactions.py with the following command does that all
-% at once (hopefully without causing issues with MATLAB dependencies/libs)
-files = join(strcat(storpath, 'r', merge_units, filesuffix), ' ');
-output = strcat(storpath, 'r', ref_tile_name, '.merged', filesuffix);
-cmd = sprintf('python gisactions.py merge %s %s', output, files);
-          
-[status, cmd] = system(cmd);
-if status == 1
-    error(cmd)
-end
-
-original_dem = [storpath, filename];
-merged_dem = output;
 
 %%
 % ---------------------------------------------------------------------
@@ -191,11 +200,6 @@ trackselection.asp_mode = asp_mode_col;
 trackselection.asp_std = asp_std_col;
 
 % Return annotated tracks
-tracksOroLift = trackselection;
-
-% Delete merged file
-% delete(merged_dem);
-
-% end % if size(trackselection, 1) > 0
+tracksOrogLift = trackselection;
 
 end % function end
