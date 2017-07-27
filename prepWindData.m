@@ -1,4 +1,4 @@
-function [data, stations] = prepWeatherData(storpath, extent, datestart, dateend)
+function [data, stations] = prepWindData(storpath, extent, datestart, dateend)
 %prepWeatherData Downloads, cleans and stores KNMI weather data
 %   Inputs:
 %   1. A path to store the used files at (e.g. data/weather/)
@@ -16,23 +16,26 @@ function [data, stations] = prepWeatherData(storpath, extent, datestart, dateend
 %   [data, stations] = prepWeatherData('data/weather/', ...
 %                           'data/ResearchAreaNH.shp', 20140501, 20140715);
 %
-%   Weather data comes from the Dutch Meteorological Institute. The
-%   following script downloads a .nc file from the following url containing
-%   all prerequisite information about the weather stations. We need to use
-%   this to later on access data from weather stations at sea, by default
-%   acquiring non-land-based data is not documented anywhere (at least I
-%   could not find it).
+%   Weather data comes from the Dutch Meteorological Institute (KNMI). The
+%   script below downloads a .nc file from the following url containing all
+%   prerequisite information about the weather stations. We need to use
+%   this file to know the GPS locations of the weather stations and to
+%   potentially use weather data from weather stations located at sea
+%   (unfortunately not possible yet)
 %
+%   Alternative download if the script does not work:
 %   1) Go to the following url to find the NetCDF file:
-%      https://data.overheid.nl/data/dataset/a4c85871-6847-4b55-bc46-e14d74cf2c0
-%      You should be on the ?KNMI network of observation stations? dataset
-%      page
+%      https://data.overheid.nl/data/dataset/a4c85871-6847-4b55-bc46-e14d74cf2c05
+%      You should be on the KNMI network of observation stations dataset
+%      page. If the URL does not work anymore, for some reason, search for
+%      'KNMI network of observation stations' using the search function on
+%      data.overheid.nl
 %   2) Open the ATOM feed. 
 %   3) Find the url that ends in .nc.zip and use it instead of the one 
 %      below if it does not work
 %
 %   The following scripts automates these steps, but these steps may change
-%   because the url may change. However, the steps taken are not very
+%   because the url may change. Tthe steps taken, however,  are not very
 %   likely to change significantly.
 
     % ---------------------------------------------------------------------
@@ -41,8 +44,8 @@ function [data, stations] = prepWeatherData(storpath, extent, datestart, dateend
     %
     % Note: although this file contains data about off-shore weather
     % stations, stations, the script is not able to download the data of
-    % these stations subsequently. Maybe a work-around can be found, but
-    % let's ignore these stations for now.
+    % these stations subsequently yet. Maybe a work-around can be found,
+    % so let's ignore these stations for now.
     % ---------------------------------------------------------------------
 
     if exist(storpath, 'dir') ~= 7
@@ -75,13 +78,13 @@ function [data, stations] = prepWeatherData(storpath, extent, datestart, dateend
 
     weatherStationsAll = table(wmo, name, type, lat, lon, 'RowNames', wmo);
 
-    % Adjust wmo (weather station IDs) to fit use later on by removing
+    % Adjust wmo (weather station IDs) to fit use for later on by removing
     % 06-prefix
     weatherStationsAll(:,1) = cellfun(@(s) s(3:end), ...
         table2cell(weatherStationsAll(:,1)), 'uniformoutput', 0);
     weatherStationsAll.Properties.RowNames = weatherStationsAll.wmo;
 
-    % Select only weather stations within polygon bounds
+    % Select only weather stations within research area polygon bounds
     polygon = shaperead(extent);
 
     in = inpolygon(lon, lat, polygon.X, polygon.Y);
@@ -101,7 +104,6 @@ function [data, stations] = prepWeatherData(storpath, extent, datestart, dateend
     % without this prefix. Also stations have to be separated with a colon
     % (:)
     stations = strjoin(weatherStations.wmo, ':');
-    stations = replace(stations, '06', ''); % NOTE: Does this still do anything?
 
     % Prepare other POST request components
     vars = 'WIND';                  % Variables of interest (see docs)
@@ -128,8 +130,8 @@ function [data, stations] = prepWeatherData(storpath, extent, datestart, dateend
     
     % KNMI weather data always contains quite a few headerlines. In case
     % this script is only used to download wind data, the following is
-    % correct. If more data is selected (by changing vars (above), this
-    % line needs to change.
+    % correct. If more data is selected (by changing vars (above), the
+    % following lines need to change
     headerlines = 15 + size(weatherStations,1);
 
     % Scan the contents of the file
@@ -160,6 +162,7 @@ function [data, stations] = prepWeatherData(storpath, extent, datestart, dateend
     
     % Return values
     stations = weatherStations;
-    data = weather;
+    data = table(weather(:,1), weather(:,2), weather(:,3), weather(:,4), weather(:,5), weather(:,6), weather(:,7), ...
+             'VariableNames', {'stationID', 'date', 'hour', 'wdir', 'wspeed_hr', 'wspeed_10min', 'wspeed_peak'});
 end
 

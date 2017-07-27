@@ -8,15 +8,14 @@ close all;
 clc;
 
 setenv('PATH', ['/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin', getenv('PATH')])
-setenv('DYLD_LIBRARY_PATH',['/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin' getenv('DYLD_LIBRARY_PATH')])
+setenv('DYLD_LIBRARY_PATH',['/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/Users/barthoekstra/anaconda/pkgs/' getenv('DYLD_LIBRARY_PATH')])
 
 profile on;
 
-load('proj_settings_2016.mat');
-load('proj_tracks_2016.mat');
-load('proj_dems_2016.mat');
-load('proj_wind_2016.mat');
-
+load('temp/proj_settings_2016.mat');
+load('temp/proj_tracks_2016.mat');
+load('temp/proj_dems_2016.mat');
+load('temp/proj_wind_2016.mat');
 
 % Prepare tracks to store orographic lift data
 i = size(tracks, 1);
@@ -46,7 +45,7 @@ for i = 1:n
     fprintf('%d/%d Starting orographic lift calculations on tile %s for %d records \n', i, n, string(deminfo.filenames), size(trackselection, 1));
     tracksOroLift = calcOrographicLift('data/dem/', deminfo.filenames, ...
                                        trackselection, stations, wind, ...
-                                       2.5, 4, -1e10);
+                                       2.5, 4, -1e10, 0);
     
     % Remove old tracks without orographic lift data       
     tracks(tracks.longitude >= deminfo.XMin & tracks.longitude <= deminfo.XMax ...
@@ -59,7 +58,7 @@ for i = 1:n
     toc
 end
 
-save(['proj_tracks_oroglift_', daterange, '.mat'], 'tracks');
+save(['temp/proj_tracks_oroglift_', daterange, '.mat'], 'tracks');
 
 profile viewer;
 
@@ -76,7 +75,7 @@ end
 classifications.date_time = replace(classifications.date_time, 'T', ' ');
 classifications.date_time = replace(classifications.date_time, '00Z', '');
 
-% Merge with tracks to creat the final combinations of tracks information
+% Merge with tracks to create the final combinations of tracks information
 % and behaviour classifications
 classified_tracks = innerjoin(tracks, classifications);
 
@@ -87,7 +86,7 @@ IDs = [1:1:n]';
 classified_tracks.ID = IDs;
 classified_tracks = [classified_tracks(:,38), classified_tracks(:,1:37)];
 
-save(['proj_tracks_classified_', daterange, '.mat'], 'classified_tracks');
+save(['temp/proj_tracks_classified_', daterange, '.mat'], 'classified_tracks');
 
 %% Prepare data for data analysis
 %  In our data analysis, we are only focussed on the flight strategies of
@@ -115,26 +114,23 @@ flight_tracks = classified_tracks(classified_tracks.class_id == 1 | ...
                                   classified_tracks.class_id == 9, :);
 
 % Save the final results in MATLAB and CSV file
-save(['proj_flight_tracks_', daterange, '.mat'], 'flight_tracks');
-writetable(flight_tracks, ['flight_tracks_', daterange, '.csv']);
+save(['temp/proj_flight_tracks_', daterange, '.mat'], 'flight_tracks');
+writetable(flight_tracks, ['data/output/flight_tracks_', daterange, '.csv']);
 
-%% Optional: Combine datasets from multiple periods
-%  If necessary, this can be done as in the following example, uncomment
-%  when in use:
-
-flight_2015 = load('proj_flight_tracks_2015');
-flight_2016 = load('proj_flight_tracks_2016');
+%% Combine datasets from multiple periods
+flight_2015 = load('temp/proj_flight_tracks_2015');
+flight_2016 = load('temp/proj_flight_tracks_2016');
 
 flight_tracks = vertcat(flight_2015.flight_tracks, flight_2016.flight_tracks);
 
-save('flight_tracks_2015_2016.mat', 'flight_tracks');
-writetable(flight_tracks, 'flight_tracks_2015_2016.csv');
+save('data/output/flight_tracks_2015_2016.mat', 'flight_tracks');
+writetable(flight_tracks, 'data/output/flight_tracks_2015_2016.csv');
 
 %% Optional: Combine classified datasets from multiple periods
-classified_2015 = load('proj_tracks_classified_2015.mat');
-classified_2016 = load('proj_tracks_classified_2016.mat');
+classified_2015 = load('temp/proj_tracks_classified_2015.mat');
+classified_2016 = load('temp/proj_tracks_classified_2016.mat');
 
 classified_tracks = vertcat(classified_2015.classified_tracks, classified_2016.classified_tracks);
 
-save('classified_tracks_2015_2016.mat', 'classified_tracks');
-writetable(classified_tracks, 'classified_tracks_2015_2016.csv');
+save('data/output/classified_tracks_2015_2016.mat', 'classified_tracks');
+writetable(classified_tracks, 'data/output/classified_tracks_2015_2016.csv');

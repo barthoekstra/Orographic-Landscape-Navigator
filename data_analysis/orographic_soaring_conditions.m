@@ -381,7 +381,7 @@ cv_lbbg_all = std_lbbg_all / mean_lbbg_all
 % Create the plot for both species combined
 pd_soaring_windspeed = fitdist(soaring.wspeed, 'Kernel');
 pd_random_windspeed = fitdist(random.wspeed, 'Kernel');
-x = 0:0.5:15;
+x = 0:1:15;
 y_both_species_windspeed = pdf(pd_soaring_windspeed, x); % Both species of gulls combined
 y_random_windspeed = pdf(pd_random_windspeed, x);
 
@@ -568,20 +568,30 @@ subplot(1,2,2);
     hold off;
 
 %% And finally plot them together in 1 figure
+% In this case we make use of circular statistics, so estimates at the
+% edges of the distribution are more accurate
+pd_soaring_hg_incidence_circ = circ_ksdensity(soaring_all_hg.incidence, -180:1:180, 'std');
+pd_soaring_lbbg_incidence_circ = circ_ksdensity(soaring_all_lbbg.incidence, -180:1:180, 'std');
+pd_random_circ = circ_ksdensity(random.incidence, -180:1:180, 'std');
+
+[x_soaring_hg_incidence, ~] = intersections(x, pd_random_circ, x, pd_soaring_hg_incidence_circ, 1)
+[x_soaring_lbbg_incidence, ~] = intersections(x, pd_random_circ, x, pd_soaring_lbbg_incidence_circ, 1)
+
 figure(12);
 pos = get(gcf, 'Position');
 set(gcf, 'Position', [pos(1) pos(2) width * 100, height * 100]);
 set(gca, 'FontSize', fontsize, 'LineWidth', axislinewidth);
 hold on;
-plot(x, y_random_incidence, 'DisplayName', 'Landscape background', 'LineWidth', 2, 'Color', [0.5 0.5 0.5], 'LineStyle', '-.');
-plot(x, y_hg_incidence, 'DisplayName', 'Herring Gull', 'LineWidth', 2);
-plot(x, y_lbbg_incidence, 'DisplayName', 'Lesser Black-backed Gull', 'LineWidth', 2);
+plot(x, pd_random_circ, 'DisplayName', 'Landscape background', 'LineWidth', 2, 'Color', [0.5 0.5 0.5], 'LineStyle', '-.');
+plot(x, pd_soaring_hg_incidence_circ, 'DisplayName', 'Herring Gull', 'LineWidth', 2);
+plot(x, pd_soaring_lbbg_incidence_circ, 'DisplayName', 'Lesser Black-backed Gull', 'LineWidth', 2);
 %title({'\bf\fontsize{14} Species comparison'});
 title({'\bf\fontsize{14} Wind incidence angle in Herring and Lesser Black-backed Gull tracks', ...
-           '\rm\fontsize{12} HG: -71 ? 54 / LBBG: -71 ? 55 [\circ]'}); % add these values manually
+           '\rm\fontsize{12} HG: -71 - 54 / LBBG: -72 - 55 [\circ]'}); % add these values manually
 xlabel('Wind incidence angle [\circ]', 'FontSize', fontsize); 
 ylabel('Probability density', 'FontSize', fontsize);
-%xlim([-180 180]);
+xlim([-180 180]);
+xticks(-180:45:180);
 legend('show');
 hold off;
 
